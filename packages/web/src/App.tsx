@@ -7,6 +7,9 @@ import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Recover } from './pages/Recover';
 import { Register } from './pages/Register';
+import { Round } from './pages/Round';
+import { Tournament } from './pages/Tournament';
+import { TournamentCreate } from './pages/TournamentCreate';
 
 /** Árbol de rutas. Guards: público (login/registro) vs protegido (app). */
 export function App() {
@@ -22,6 +25,9 @@ export function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Home />} />
         <Route path="/avatars/new" element={<AvatarCreate />} />
+        <Route path="/tournaments/new" element={<TournamentCreate />} />
+        <Route path="/tournaments/:id" element={<Tournament />} />
+        <Route path="/tournaments/:id/rounds/:seq" element={<Round />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

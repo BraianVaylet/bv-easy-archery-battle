@@ -35,10 +35,10 @@ Tareas pequeñas, priorizadas y autocontenidas para que modelos de IA (u otros d
 - [x] **BE-7** `GET /tournaments?status=` + `GET /tournaments/:id` (config + resumen de tiradas + mini-podios top 3). **DoD:** tests de listado y detalle; ownership.
 - [x] **BE-8** `GET /tournaments/:id/rounds/:seq` + `PUT .../scores/:participantId` (autosave): `validateEndScore`, recalcular totales/contadores, actualizar rollups por delta, marcar tirada `completa` cuando todos completaron; **idempotente/editable**. **DoD:** tests de carga, edición (recompute correcto), completitud de tirada, rechazo de token inválido, server ignora `end_total` del cliente.
 - [x] **BE-9** `POST /tournaments/:id/finish` (exige todas las tiradas completas → `finalizado`). **DoD:** test bloquea si faltan tiradas; setea `finished_at`.
-- [ ] **FE-5** `Home`: torneos en curso/finalizados + accesos a crear torneo y crear avatar. **DoD:** lista por estado; reabrir finalizado.
-- [ ] **FE-6** `TournamentCreate`: nombre, modalidad (setea flechas default), tiradas (def 10), flechas, agregar avatars + **crear avatar inline**. **DoD:** crea torneo; defaults correctos por modalidad; tests RTL.
-- [ ] **FE-7** `Tournament`: lista de tiradas (estado/editar), mini-podios general+categoría, botón Podios habilitado al completar. **DoD:** navegación a tirada y podios; estados correctos.
-- [ ] **FE-8** `Round` + `ScoreKeypad`/`EndRow`/`PairCard`: orden por estaca/par, color de estaca, entrada descendente, X/M, **autosave optimista**, habilita siguiente. **DoD:** cargar end guarda y refleja total; editar end recalcula; tests RTL del keypad.
+- [x] **FE-5** `Home`: torneos en curso/finalizados + accesos a crear torneo y crear avatar. **DoD:** lista por estado; reabrir finalizado.
+- [x] **FE-6** `TournamentCreate`: nombre, modalidad (setea flechas default), tiradas (def 10), flechas, agregar avatars + **crear avatar inline**. **DoD:** crea torneo; defaults correctos por modalidad; tests RTL.
+- [x] **FE-7** `Tournament`: lista de tiradas (estado/editar), mini-podios general+categoría, botón Podios habilitado al completar. **DoD:** navegación a tirada y podios; estados correctos.
+- [x] **FE-8** `Round` + `ScoreKeypad`/`EndRow`/`PairCard`: orden por estaca/par, color de estaca, entrada descendente, X/M, **autosave optimista**, habilita siguiente. **DoD:** cargar end guarda y refleja total; editar end recalcula; tests RTL del keypad.
 
 ## Fase 3 — Podios + estadísticas (P0/P1)
 

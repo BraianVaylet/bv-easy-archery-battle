@@ -21,6 +21,10 @@ vi.mock('./avatars/useAvatars', () => ({
   useAvatars: () => ({ avatars: [], isLoading: false, create: { mutate: vi.fn() } }),
 }));
 
+vi.mock('./tournaments/useTournaments', () => ({
+  useTournaments: () => ({ tournaments: [], isLoading: false }),
+}));
+
 function renderAt(path: string) {
   return render(
     <ThemeProvider>
