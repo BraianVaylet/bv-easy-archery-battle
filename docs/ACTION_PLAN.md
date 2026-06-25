@@ -23,10 +23,10 @@ Tareas pequeñas, priorizadas y autocontenidas para que modelos de IA (u otros d
 - [x] **BE-3** Auth: `routes/auth` + `authService` (register/login/logout/me/csrf/recover). Reusar lógica `bv-bow-sight`. **DoD:** tests register→login→me→logout; CSRF requerido en mutación; lookup timing-safe.
 - [x] **BE-4** `GET /catalog` (categorías, modalidades con defaults+scoring, colores). **DoD:** test de forma del payload.
 - [x] **BE-5** Avatars CRUD (`/avatars` GET/POST/PATCH/DELETE-archivar) con `avatarService`/`avatarRepo` + **ownership**. **DoD:** tests CRUD + rechazo de avatar ajeno.
-- [ ] **FE-1** Bootstrap web: Vite + Tailwind 4 + tokens CSS + **tema/color base** (copiar) + vite-plugin-pwa + manifest/iconos + anti-FOUC. **DoD:** app monta; toggle claro/oscuro y cambio de acento funcionan; PWA instalable.
-- [ ] **FE-2** Infra FE: `apiClient` (CSRF), `queryClient`, `useAuth`, `ProtectedRoute`/`PublicOnlyRoute`, `AppShell`, `components/ui/`. **DoD:** rutas protegidas redirigen; `useAuth` resuelve sesión.
-- [ ] **FE-3** Páginas Landing/Login/Register/Recover (reusar UI `bv-bow-sight`). **DoD:** registro+login end-to-end contra la API local.
-- [ ] **FE-4** `AvatarCreate` (alias*, arco* selector, color* selector ≥10, principiante checkbox→escuela) + `useAvatars` + lista en Home. **DoD:** crear avatar y verlo; tests RTL de validación.
+- [x] **FE-1** Bootstrap web: Vite + Tailwind 4 + tokens CSS + **tema/color base** (copiar) + vite-plugin-pwa + manifest/iconos + anti-FOUC. **DoD:** app monta; toggle claro/oscuro y cambio de acento funcionan; PWA instalable.
+- [x] **FE-2** Infra FE: `apiClient` (CSRF), `queryClient`, `useAuth`, `ProtectedRoute`/`PublicOnlyRoute`, `AppShell`, `components/ui/`. **DoD:** rutas protegidas redirigen; `useAuth` resuelve sesión.
+- [x] **FE-3** Páginas Landing/Login/Register/Recover (reusar UI `bv-bow-sight`). **DoD:** registro+login end-to-end contra la API local.
+- [x] **FE-4** `AvatarCreate` (alias*, arco* selector, color* selector ≥10, principiante checkbox→escuela) + `useAvatars` + lista en Home. **DoD:** crear avatar y verlo; tests RTL de validación.
 
 ## Fase 2 — Torneo + tiradas + scoring (P0, núcleo)
 
