@@ -1,0 +1,309 @@
+import type {
+  Avatar,
+  TournamentDetail,
+  TournamentDetailView,
+  TournamentListItem,
+} from '@bv/shared';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { createApp } from '../src/app';
+import { createDb } from '../src/db/connection';
+import { type App, type Jar, cookieHeader, jsonReq, registerUser } from './helpers';
+
+async function makeAvatar(
+  app: App,
+  jar: Jar,
+  alias: string,
+  bowCategory: string,
+  color = 'blue',
+): Promise<number> {
+  const res = await jsonReq(app, '/api/avatars', 'POST', { alias, bowCategory, color }, jar);
+  return ((await res.json()) as Avatar).id;
+}
+
+async function createTournament(
+  app: App,
+  jar: Jar,
+  body: Record<string, unknown>,
+): Promise<Response> {
+  return jsonReq(app, '/api/tournaments', 'POST', body, jar);
+}
+
+describe('tournaments — creación (BE-6)', () => {
+  let app: App;
+  let jar: Jar;
+
+  beforeEach(async () => {
+    app = createApp(createDb(':memory:'));
+    jar = await registerUser(app);
+  });
+
+  it('crea torneo completo de sala: participantes, tiradas y estacas null', async () => {
+    const ids = [
+      await makeAvatar(app, jar, 'Ana', 'recurvo_olimpico'),
+      await makeAvatar(app, jar, 'Beto', 'compuesto'),
+      await makeAvatar(app, jar, 'Caro', 'longbow'),
+    ];
+
+    const res = await createTournament(app, jar, {
+      name: 'Torneo Sala',
+      modality: 'sala',
+      roundsCount: 10,
+      arrowsPerEnd: 3,
+      avatarIds: ids,
+    });
+
+    expect(res.status).toBe(201);
+    const t = (await res.json()) as TournamentDetail;
+    expect(t.participants).toHaveLength(3);
+    expect(t.rounds).toHaveLength(10);
+    expect(t.rounds.map((r) => r.seq)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(t.rounds.every((r) => r.status === 'pendiente')).toBe(true);
+    // Sala: sin estacas, todos en el grupo único.
+    expect(t.participants.every((p) => p.stake === null)).toBe(true);
+    expect(t.stakeMap).toBeNull();
+    // Snapshot del set de puntuación de diana.
+    expect(t.scoringSet).toContain('X');
+    // Rollups en cero al crear.
+    expect(t.participants.every((p) => p.totalScore === 0 && p.endsCompleted === 0)).toBe(true);
+  });
+
+  it('campo: asigna estacas por categoría y arma pares dentro de la estaca', async () => {
+    const roja1 = await makeAvatar(app, jar, 'R1', 'compuesto');
+    const roja2 = await makeAvatar(app, jar, 'R2', 'recurvo_olimpico');
+    const azul1 = await makeAvatar(app, jar, 'A1', 'raso');
+    const azul2 = await makeAvatar(app, jar, 'A2', 'cazador');
+
+    const res = await createTournament(app, jar, {
+      name: 'Torneo Campo',
+      modality: 'campo',
+      roundsCount: 4,
+      arrowsPerEnd: 3,
+      avatarIds: [roja1, roja2, azul1, azul2],
+    });
+
+    expect(res.status).toBe(201);
+    const t = (await res.json()) as TournamentDetail;
+
+    const stakeByAvatar = new Map(t.participants.map((p) => [p.avatarId, p.stake]));
+    expect(stakeByAvatar.get(roja1)).toBe('roja');
+    expect(stakeByAvatar.get(roja2)).toBe('roja');
+    expect(stakeByAvatar.get(azul1)).toBe('azul');
+    expect(stakeByAvatar.get(azul2)).toBe('azul');
+
+    // Cada par contiene una sola estaca.
+    const pairs = new Map<number, Set<string | null>>();
+    for (const p of t.participants) {
+      if (!pairs.has(p.pairIndex)) pairs.set(p.pairIndex, new Set());
+      pairs.get(p.pairIndex)?.add(p.stake);
+    }
+    for (const stakes of pairs.values()) {
+      expect(stakes.size).toBe(1);
+    }
+    expect(t.stakeMap).not.toBeNull();
+  });
+
+  it('3d: guarda el set de puntuación 3D', async () => {
+    const id = await makeAvatar(app, jar, 'Solo', 'recurvo_olimpico');
+    const res = await createTournament(app, jar, {
+      name: 'Torneo 3D',
+      modality: '3d',
+      roundsCount: 2,
+      arrowsPerEnd: 2,
+      avatarIds: [id],
+    });
+    expect(res.status).toBe(201);
+    const t = (await res.json()) as TournamentDetail;
+    expect(t.scoringSet).toEqual(['11', '10', '8', '5', 'M']);
+  });
+
+  it('respeta ownership: avatar de otro usuario → 404', async () => {
+    const id = await makeAvatar(app, jar, 'Mio', 'compuesto');
+    const jar2 = await registerUser(app, 'otro');
+    const res = await createTournament(app, jar2, {
+      name: 'Robado',
+      modality: 'sala',
+      roundsCount: 3,
+      arrowsPerEnd: 3,
+      avatarIds: [id],
+    });
+    expect(res.status).toBe(404);
+  });
+
+  it('rechaza mutación sin CSRF (403)', async () => {
+    const res = await app.request('/api/tournaments', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie: `bv_session=${jar.bv_session}` },
+      body: JSON.stringify({
+        name: 'X',
+        modality: 'sala',
+        roundsCount: 3,
+        arrowsPerEnd: 3,
+        avatarIds: [1],
+      }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it('rechaza sin participantes (400)', async () => {
+    const res = await createTournament(app, jar, {
+      name: 'Vacío',
+      modality: 'sala',
+      roundsCount: 3,
+      arrowsPerEnd: 3,
+      avatarIds: [],
+    });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('tournaments — listado y detalle (BE-7)', () => {
+  let app: App;
+  let jar: Jar;
+
+  beforeEach(async () => {
+    app = createApp(createDb(':memory:'));
+    jar = await registerUser(app);
+  });
+
+  async function seedTournament(): Promise<number> {
+    const a = await makeAvatar(app, jar, 'Ana', 'recurvo_olimpico');
+    const b = await makeAvatar(app, jar, 'Beto', 'compuesto');
+    const res = await createTournament(app, jar, {
+      name: 'T1',
+      modality: 'sala',
+      roundsCount: 5,
+      arrowsPerEnd: 3,
+      avatarIds: [a, b],
+    });
+    return ((await res.json()) as TournamentDetail).id;
+  }
+
+  async function get(path: string, j: Jar = jar): Promise<Response> {
+    return app.request(path, { headers: { cookie: cookieHeader(j) } });
+  }
+
+  it('lista los torneos del usuario con contadores', async () => {
+    await seedTournament();
+    const res = await get('/api/tournaments');
+    expect(res.status).toBe(200);
+    const list = (await res.json()) as TournamentListItem[];
+    expect(list).toHaveLength(1);
+    expect(list[0]?.participantsCount).toBe(2);
+    expect(list[0]?.roundsCompleted).toBe(0);
+    expect(list[0]?.status).toBe('en_curso');
+  });
+
+  it('filtra por status', async () => {
+    await seedTournament();
+    expect(
+      (await (await get('/api/tournaments?status=en_curso')).json()) as TournamentListItem[],
+    ).toHaveLength(1);
+    expect(
+      (await (await get('/api/tournaments?status=finalizado')).json()) as TournamentListItem[],
+    ).toHaveLength(0);
+  });
+
+  it('rechaza status inválido (400)', async () => {
+    expect((await get('/api/tournaments?status=loquesea')).status).toBe(400);
+  });
+
+  it('detalle incluye participantes, tiradas y mini-podio', async () => {
+    const id = await seedTournament();
+    const res = await get(`/api/tournaments/${id}`);
+    expect(res.status).toBe(200);
+    const t = (await res.json()) as TournamentDetailView;
+    expect(t.participants).toHaveLength(2);
+    expect(t.rounds).toHaveLength(5);
+    expect(t.miniPodium.length).toBeLessThanOrEqual(3);
+    expect(t.miniPodium[0]?.rank).toBe(1);
+    expect(t.miniPodium[0]?.participant).toBeDefined();
+  });
+
+  it('respeta ownership: detalle de otro usuario → 404', async () => {
+    const id = await seedTournament();
+    const jar2 = await registerUser(app, 'otro');
+    expect((await get(`/api/tournaments/${id}`, jar2)).status).toBe(404);
+  });
+
+  it('detalle inexistente → 404', async () => {
+    expect((await get('/api/tournaments/9999')).status).toBe(404);
+  });
+});
+
+describe('tournaments — finalizar (BE-9)', () => {
+  let app: App;
+  let jar: Jar;
+
+  beforeEach(async () => {
+    app = createApp(createDb(':memory:'));
+    jar = await registerUser(app);
+  });
+
+  /** Crea un torneo con 1 participante, `rounds` tiradas de 1 flecha. Devuelve {id, pid}. */
+  async function newTournament(rounds: number): Promise<{ id: number; pid: number }> {
+    const avatarId = await makeAvatar(app, jar, 'Solo', 'compuesto');
+    const res = await createTournament(app, jar, {
+      name: 'Fin',
+      modality: 'sala',
+      roundsCount: rounds,
+      arrowsPerEnd: 1,
+      avatarIds: [avatarId],
+    });
+    const t = (await res.json()) as TournamentDetail;
+    const first = t.participants[0];
+    if (!first) throw new Error('sin participante');
+    return { id: t.id, pid: first.id };
+  }
+
+  function loadRound(id: number, seq: number, pid: number): Promise<Response> {
+    return jsonReq(
+      app,
+      `/api/tournaments/${id}/rounds/${seq}/scores/${pid}`,
+      'PUT',
+      {
+        arrows: ['X'],
+      },
+      jar,
+    );
+  }
+
+  function finish(id: number, j: Jar = jar): Promise<Response> {
+    return jsonReq(app, `/api/tournaments/${id}/finish`, 'POST', null, j);
+  }
+
+  it('finaliza cuando todas las tiradas están completas y setea finished_at', async () => {
+    const { id, pid } = await newTournament(1);
+    await loadRound(id, 1, pid);
+    const res = await finish(id);
+    expect(res.status).toBe(200);
+    const t = (await res.json()) as TournamentDetail;
+    expect(t.status).toBe('finalizado');
+    expect(typeof t.finishedAt).toBe('number');
+  });
+
+  it('bloquea si faltan tiradas (409)', async () => {
+    const { id } = await newTournament(2);
+    expect((await finish(id)).status).toBe(409);
+  });
+
+  it('no se puede finalizar dos veces (409)', async () => {
+    const { id, pid } = await newTournament(1);
+    await loadRound(id, 1, pid);
+    expect((await finish(id)).status).toBe(200);
+    expect((await finish(id)).status).toBe(409);
+  });
+
+  it('finalizado bloquea nueva carga de puntaje (409)', async () => {
+    const { id, pid } = await newTournament(1);
+    await loadRound(id, 1, pid);
+    await finish(id);
+    expect((await loadRound(id, 1, pid)).status).toBe(409);
+  });
+
+  it('respeta ownership: otro usuario no finaliza (404)', async () => {
+    const { id, pid } = await newTournament(1);
+    await loadRound(id, 1, pid);
+    const jar2 = await registerUser(app, 'otro');
+    expect((await finish(id, jar2)).status).toBe(404);
+  });
+});

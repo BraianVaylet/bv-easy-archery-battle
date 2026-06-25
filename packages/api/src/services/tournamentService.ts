@@ -1,0 +1,159 @@
+import {
+  type Avatar,
+  BOW_CATEGORIES,
+  DEFAULT_STAKE_MAP,
+  type Pairable,
+  type ParticipantStats,
+  type PodiumCategory,
+  type PodiumEntry,
+  SCORING,
+  type Stake,
+  type StakeMap,
+  type TournamentCreateInput,
+  type TournamentDetail,
+  type TournamentDetailView,
+  type TournamentListItem,
+  type TournamentParticipant,
+  type TournamentPodium,
+  type TournamentStats,
+  type TournamentStatus,
+  buildPairs,
+  participantStats,
+  rankItems,
+  stakeForCategory,
+  tournamentStats,
+  usesStakes,
+} from '@bv/shared';
+import { conflict, notFound } from '../lib/errors';
+import type { AvatarRepo } from '../repositories/avatarRepo';
+import type { ParticipantSeed, TournamentRepo } from '../repositories/tournamentRepo';
+
+interface PairableAvatar extends Pairable {
+  avatar: Avatar;
+}
+
+/** Convierte participantes en entradas de podio rankeadas (puesto compartido en empate). */
+function podiumEntries(items: TournamentParticipant[]): PodiumEntry[] {
+  return rankItems(items).map(({ item, rank }) => ({ rank, participant: item }));
+}
+
+/** Detalle + mini-podio (top 3 general). 404 si el torneo no pertenece al user. */
+function detailView(repo: TournamentRepo, userId: number, id: number): TournamentDetailView {
+  const detail = repo.getDetail(userId, id);
+  if (!detail) throw notFound('El torneo no existe.');
+  return { ...detail, miniPodium: podiumEntries(detail.participants).slice(0, 3) };
+}
+
+export function createTournamentService(repo: TournamentRepo, avatarRepo: AvatarRepo) {
+  return {
+    create(userId: number, input: TournamentCreateInput): TournamentDetail {
+      // Verifica ownership de cada avatar y arma el snapshot (orden de input).
+      const avatars = input.avatarIds.map((id) => {
+        const a = avatarRepo.findOwned(userId, id);
+        if (!a) throw notFound('Uno de los avatares no existe.');
+        return a;
+      });
+
+      const useStake = usesStakes(input.modality);
+      const stakeMap: StakeMap | null = useStake
+        ? ((input.stakeMap as StakeMap | undefined) ?? DEFAULT_STAKE_MAP)
+        : null;
+
+      const pairables: PairableAvatar[] = avatars.map((avatar) => ({
+        avatar,
+        alias: avatar.alias,
+        bowCategory: avatar.bowCategory,
+        stake: stakeMap ? stakeForCategory(stakeMap, avatar.bowCategory) : null,
+      }));
+
+      const participants: ParticipantSeed[] = buildPairs(pairables).map(
+        ({ item, pairIndex, position }) => ({
+          avatarId: item.avatar.id,
+          alias: item.avatar.alias,
+          bowCategory: item.avatar.bowCategory,
+          color: item.avatar.color,
+          experience: item.avatar.experience,
+          stake: item.stake,
+          pairIndex,
+          pairPosition: position,
+        }),
+      );
+
+      const distances = useStake
+        ? ((input.distances as Record<Stake, number> | undefined) ?? null)
+        : null;
+
+      const id = repo.create(userId, {
+        name: input.name,
+        modality: input.modality,
+        roundsCount: input.roundsCount,
+        arrowsPerEnd: input.arrowsPerEnd,
+        scoringSet: [...SCORING[input.modality].tokens],
+        stakeMap,
+        distances,
+        participants,
+      });
+
+      const detail = repo.getDetail(userId, id);
+      if (!detail) throw notFound('No se pudo crear el torneo.');
+      return detail;
+    },
+
+    list(userId: number, status?: TournamentStatus): TournamentListItem[] {
+      return repo.list(userId, status);
+    },
+
+    getDetailView(userId: number, id: number): TournamentDetailView {
+      return detailView(repo, userId, id);
+    },
+
+    finish(userId: number, id: number): TournamentDetailView {
+      const result = repo.finish(userId, id);
+      if (result === 'not_found') throw notFound('El torneo no existe.');
+      if (result === 'already_finished') throw conflict('El torneo ya está finalizado.');
+      if (result === 'incomplete') throw conflict('Faltan tiradas por completar.');
+      return detailView(repo, userId, id);
+    },
+
+    getPodium(userId: number, id: number): TournamentPodium {
+      const ps = repo.getParticipants(userId, id);
+      if (!ps) throw notFound('El torneo no existe.');
+      const byCategory: PodiumCategory[] = BOW_CATEGORIES.map((category) => ({
+        category,
+        items: ps.filter((p) => p.bowCategory === category),
+      }))
+        .filter((g) => g.items.length > 0)
+        .map((g) => ({ category: g.category, entries: podiumEntries(g.items) }));
+      return {
+        general: podiumEntries(ps),
+        byCategory,
+        escuela: podiumEntries(ps.filter((p) => p.experience === 'escuela')),
+      };
+    },
+
+    getStats(userId: number, id: number): TournamentStats {
+      const ps = repo.getParticipants(userId, id);
+      if (!ps) throw notFound('El torneo no existe.');
+      return tournamentStats(
+        ps.map((p) => ({
+          bowCategory: p.bowCategory,
+          totalScore: p.totalScore,
+          totalX: p.totalX,
+          totalM: p.totalM,
+        })),
+      );
+    },
+
+    getParticipantStats(userId: number, id: number, participantId: number): ParticipantStats {
+      const data = repo.getParticipantStatsData(userId, id, participantId);
+      if (!data.ok) {
+        throw notFound(
+          data.reason === 'no_tournament' ? 'El torneo no existe.' : 'El participante no existe.',
+        );
+      }
+      return participantStats(data.modality, data.ends);
+    },
+  };
+}
+
+export type TournamentService = ReturnType<typeof createTournamentService>;

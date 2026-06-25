@@ -9,6 +9,8 @@ export * from './pairing';
 export * from './ranking';
 export * from './schemas/auth';
 export * from './schemas/avatar';
+export * from './schemas/tournament';
 export * from './scoring';
 export * from './securityQuestions';
+export * from './stats';
 export * from './types';
