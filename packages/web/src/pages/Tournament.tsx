@@ -84,6 +84,12 @@ export function Tournament() {
           </Button>
         )}
 
+        <Link to={`/tournaments/${tid}/stats`}>
+          <Button variant="secondary" className="w-full">
+            Estadísticas
+          </Button>
+        </Link>
+
         {!finished && allComplete && (
           <Button
             variant="secondary"

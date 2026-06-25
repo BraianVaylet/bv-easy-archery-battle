@@ -45,8 +45,8 @@ Tareas pequeñas, priorizadas y autocontenidas para que modelos de IA (u otros d
 - [x] **SH-4** `stats.ts`: agregaciones torneo (M, X, promedio general/categoría, mejor general/categoría) y participante (promedio, mejor end, evolución, distribución). **tdd.**
 - [x] **BE-10** `GET /tournaments/:id/podium` (general + por categoría + escuela) usando `ranking.ts` sobre rollups. **DoD:** tests de orden y desempate; escuela filtra `experience='escuela'`.
 - [x] **BE-11** `GET /tournaments/:id/stats`. **BE-12** `GET /tournaments/:id/participants/:pid/stats`. **DoD:** tests de métricas.
-- [ ] **FE-9** `Podium`: 3 podios, top-3 resaltado, listado completo. **DoD:** render correcto; tests RTL.
-- [ ] **FE-10** `TournamentStats`. **FE-11** `ParticipantStats` (incl. evolución por tirada). **DoD:** render de métricas reales.
+- [x] **FE-9** `Podium`: 3 podios, top-3 resaltado, listado completo. **DoD:** render correcto; tests RTL.
+- [x] **FE-10** `TournamentStats`. **FE-11** `ParticipantStats` (incl. evolución por tirada). **DoD:** render de métricas reales.
 
 ## Fase 4 — Calidad, seguridad, deploy (P0 seguridad / P1 resto)
 
