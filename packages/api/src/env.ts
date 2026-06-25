@@ -20,6 +20,8 @@ const envSchema = z
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
     PORT: num(8787),
     DATABASE_PATH: z.string().default('./data/app.db'),
+    /** Carpeta del build del frontend a servir en producción (relativa al cwd de la API). */
+    WEB_DIST: z.string().default('public'),
     SESSION_SECRET: z.string().default('dev-insecure-secret-change-me'),
     SESSION_TTL_DAYS: num(30),
     COOKIE_SECURE: bool(false),
