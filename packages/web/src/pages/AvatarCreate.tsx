@@ -46,8 +46,8 @@ export function AvatarCreate() {
           <FieldError>{errors.alias}</FieldError>
         </div>
 
-        <div>
-          <Label>Categoría de arco</Label>
+        <fieldset className="border-0 p-0">
+          <legend className="mb-1 block font-medium text-muted text-sm">Categoría de arco</legend>
           <div className="grid grid-cols-2 gap-2">
             {BOW_CATEGORIES.map((cat) => (
               <button
@@ -56,7 +56,7 @@ export function AvatarCreate() {
                 aria-pressed={bowCategory === cat}
                 onClick={() => setBowCategory(cat)}
                 className={cn(
-                  'rounded-lg border px-3 py-2 text-sm transition-colors',
+                  'min-h-11 rounded-lg border px-3 py-2 text-sm transition-colors',
                   bowCategory === cat
                     ? 'border-primary bg-primary-soft text-fg'
                     : 'border-border bg-surface text-muted hover:bg-surface-2',
@@ -67,10 +67,10 @@ export function AvatarCreate() {
             ))}
           </div>
           <FieldError>{errors.bowCategory}</FieldError>
-        </div>
+        </fieldset>
 
-        <div>
-          <Label>Color</Label>
+        <fieldset className="border-0 p-0">
+          <legend className="mb-1 block font-medium text-muted text-sm">Color</legend>
           <div className="flex flex-wrap gap-3">
             {AVATAR_COLORS.map((c) => (
               <button
@@ -82,14 +82,14 @@ export function AvatarCreate() {
                 onClick={() => setColor(c.key)}
                 style={{ backgroundColor: c.hex }}
                 className={cn(
-                  'h-9 w-9 rounded-full transition-transform hover:scale-110',
+                  'h-11 w-11 rounded-full transition-transform hover:scale-110',
                   color === c.key && 'ring-2 ring-fg ring-offset-2 ring-offset-surface',
                 )}
               />
             ))}
           </div>
           <FieldError>{errors.color}</FieldError>
-        </div>
+        </fieldset>
 
         <label className="flex items-center gap-3 text-fg text-sm">
           <input

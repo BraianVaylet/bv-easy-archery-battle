@@ -79,8 +79,8 @@ export function TournamentCreate() {
           <FieldError>{errors.name}</FieldError>
         </div>
 
-        <div>
-          <Label>Modalidad</Label>
+        <fieldset className="border-0 p-0">
+          <legend className="mb-1 block font-medium text-muted text-sm">Modalidad</legend>
           <div className="grid grid-cols-2 gap-2">
             {MODALITIES.map((m) => (
               <button
@@ -89,7 +89,7 @@ export function TournamentCreate() {
                 aria-pressed={modality === m}
                 onClick={() => pickModality(m)}
                 className={cn(
-                  'rounded-lg border px-3 py-2 text-sm transition-colors',
+                  'min-h-11 rounded-lg border px-3 py-2 text-sm transition-colors',
                   modality === m
                     ? 'border-primary bg-primary-soft text-fg'
                     : 'border-border bg-surface text-muted hover:bg-surface-2',
@@ -99,7 +99,7 @@ export function TournamentCreate() {
               </button>
             ))}
           </div>
-        </div>
+        </fieldset>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -252,7 +252,7 @@ function InlineAvatarCreate({ onCreated }: { onCreated: (a: Avatar) => void }) {
             aria-pressed={bowCategory === cat}
             onClick={() => setBowCategory(cat)}
             className={cn(
-              'rounded-lg border px-2 py-1.5 text-xs transition-colors',
+              'min-h-11 rounded-lg border px-2 py-1.5 text-xs transition-colors',
               bowCategory === cat
                 ? 'border-primary bg-primary-soft text-fg'
                 : 'border-border bg-surface text-muted hover:bg-surface-2',
@@ -272,7 +272,7 @@ function InlineAvatarCreate({ onCreated }: { onCreated: (a: Avatar) => void }) {
             onClick={() => setColor(c.key)}
             style={{ backgroundColor: c.hex }}
             className={cn(
-              'h-8 w-8 rounded-full transition-transform hover:scale-110',
+              'h-11 w-11 rounded-full transition-transform hover:scale-110',
               color === c.key && 'ring-2 ring-fg ring-offset-2 ring-offset-surface',
             )}
           />

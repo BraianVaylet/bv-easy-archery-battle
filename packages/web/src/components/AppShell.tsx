@@ -22,7 +22,7 @@ export function AppShell({ title, showBack, action, children }: AppShellProps) {
             type="button"
             onClick={() => navigate(-1)}
             aria-label="Volver"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-fg hover:bg-surface-2"
+            className="flex h-11 w-11 items-center justify-center rounded-lg text-fg hover:bg-surface-2"
           >
             ←
           </button>

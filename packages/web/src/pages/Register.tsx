@@ -45,6 +45,7 @@ export function Register() {
             onChange={(e) => setAlias(e.target.value)}
             autoComplete="username"
             autoCapitalize="none"
+            spellCheck={false}
             required
           />
         </div>

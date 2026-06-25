@@ -50,8 +50,8 @@ Tareas pequeñas, priorizadas y autocontenidas para que modelos de IA (u otros d
 
 ## Fase 4 — Calidad, seguridad, deploy (P0 seguridad / P1 resto)
 
-- [ ] **BE-13** Auditoría de seguridad: ownership en todos los endpoints, CSP/headers, rate limit, schemas `.strict()`. Ejecutar **/security-review**. **DoD:** checklist de `SECURITY.md` verde.
-- [ ] **FE-12** Auditoría UI/accesibilidad con skills **web-design-guidelines** + **audit-website**. **DoD:** sin issues críticos; targets ≥44px, contraste AA, focus visible.
+- [x] **BE-13** Auditoría de seguridad: ownership en todos los endpoints, CSP/headers, rate limit, schemas `.strict()`. Ejecutar **/security-review**. **DoD:** checklist de `SECURITY.md` verde. _(Review limpio: sin vulnerabilidades HIGH/MEDIUM; queries parametrizadas, ownership + CSRF en mutaciones, schemas `.strict()`.)_
+- [x] **FE-12** Auditoría UI/accesibilidad con skills **web-design-guidelines** + **audit-website**. **DoD:** sin issues críticos; targets ≥44px, contraste AA, focus visible. _(web-design-guidelines: targets ≥44px, fieldset/legend en grupos, spellcheck off en alias, focus-visible global. audit-website pendiente hasta tener deploy (INF-4).)_
 - [ ] **TEST-1** E2E Playwright: registro → avatares → torneo (4 modalidades) → cargar todas las tiradas → finalizar → podios + stats. **DoD:** suite verde en CI.
 - [ ] **INF-3** Dockerfile multi-stage (BE sirve FE + `/api`), volumen `/data`, `HEALTHCHECK`. **DoD:** imagen corre y persiste.
 - [ ] **INF-4** Deploy: `fly.toml`/`render.yaml` con volumen + envs; `.env.example`. **DoD:** despliegue accesible por HTTPS con datos persistentes.

@@ -64,7 +64,9 @@ export function Recover() {
               id="alias"
               value={alias}
               onChange={(e) => setAlias(e.target.value)}
+              autoComplete="username"
               autoCapitalize="none"
+              spellCheck={false}
               required
             />
           </div>

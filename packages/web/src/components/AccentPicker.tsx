@@ -17,7 +17,7 @@ export function AccentPicker() {
           title={a.label}
           style={{ backgroundColor: a.hex }}
           className={cn(
-            'h-9 w-9 rounded-full transition-transform hover:scale-110',
+            'h-11 w-11 rounded-full transition-transform hover:scale-110',
             accent.toLowerCase() === a.hex.toLowerCase() &&
               'ring-2 ring-fg ring-offset-2 ring-offset-surface',
           )}
