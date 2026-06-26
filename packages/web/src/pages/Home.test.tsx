@@ -1,19 +1,17 @@
 import type { TournamentListItem } from '@bv/shared';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import { Home } from './Home';
 
-const { state } = vi.hoisted(() => ({
+const { state, logoutMutate } = vi.hoisted(() => ({
   state: { tournaments: [] as TournamentListItem[] },
+  logoutMutate: vi.fn(),
 }));
 
 vi.mock('../auth/useAuth', () => ({
-  useAuth: () => ({ user: { id: 1, alias: 'brai' }, logout: { mutate: vi.fn() } }),
-}));
-vi.mock('../avatars/useAvatars', () => ({
-  useAvatars: () => ({ avatars: [], isLoading: false, create: { mutate: vi.fn() } }),
+  useAuth: () => ({ user: { id: 1, alias: 'brai' }, logout: { mutate: logoutMutate } }),
 }));
 vi.mock('../tournaments/useTournaments', () => ({
   useTournaments: () => ({ tournaments: state.tournaments, isLoading: false }),
@@ -56,11 +54,15 @@ describe('Home (FE-5)', () => {
       'href',
       '/tournaments/new',
     );
-    expect(screen.getByRole('link', { name: 'Nuevo avatar' })).toHaveAttribute(
-      'href',
-      '/avatars/new',
-    );
+    expect(screen.getByRole('link', { name: 'Avatares' })).toHaveAttribute('href', '/avatars');
     expect(screen.getByText('No hay torneos en curso')).toBeInTheDocument();
+  });
+
+  it('cerrar sesión es un icono en el header', () => {
+    state.tournaments = [];
+    renderHome();
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
+    expect(logoutMutate).toHaveBeenCalled();
   });
 
   it('separa torneos por estado y enlaza al detalle', () => {

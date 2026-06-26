@@ -15,6 +15,7 @@ import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAvatars } from '../avatars/useAvatars';
 import { AppShell } from '../components/AppShell';
+import { AvatarBadge } from '../components/AvatarBadge';
 import { Button, FieldError, Input, Label } from '../components/ui';
 import { cn } from '../lib/cn';
 import { useCreateTournament } from '../tournaments/useTournaments';
@@ -135,9 +136,7 @@ export function TournamentCreate() {
         <div>
           <Label>Participantes</Label>
           {avatars.length === 0 ? (
-            <p className="text-muted text-sm">
-              No tenés avatares. Creá uno desde el botón “Nuevo avatar” en Inicio.
-            </p>
+            <p className="text-muted text-sm">No tenés avatares. Creá uno con el botón de abajo.</p>
           ) : (
             <div className="flex flex-col gap-2">
               {avatars.map((a) => (
@@ -176,7 +175,6 @@ function AvatarToggle({
   selected: boolean;
   onToggle: () => void;
 }) {
-  const hex = AVATAR_COLORS.find((c) => c.key === avatar.color)?.hex ?? '#7B8497';
   return (
     <button
       type="button"
@@ -187,11 +185,7 @@ function AvatarToggle({
         selected ? 'border-primary bg-primary-soft' : 'border-border bg-surface hover:bg-surface-2',
       )}
     >
-      <span
-        className="h-7 w-7 shrink-0 rounded-full"
-        style={{ backgroundColor: hex }}
-        aria-hidden
-      />
+      <AvatarBadge bowCategory={avatar.bowCategory} color={avatar.color} size={32} />
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium text-fg">{avatar.alias}</span>
         <span className="block text-muted text-xs">{BOW_CATEGORY_LABELS[avatar.bowCategory]}</span>

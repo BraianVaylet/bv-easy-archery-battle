@@ -1,8 +1,15 @@
-import { AVATAR_COLORS, BOW_CATEGORIES, BOW_CATEGORY_LABELS, avatarCreateSchema } from '@bv/shared';
+import {
+  AVATAR_COLORS,
+  BOW_CATEGORIES,
+  BOW_CATEGORY_LABELS,
+  type BowCategory,
+  avatarCreateSchema,
+} from '@bv/shared';
 import { type FormEvent, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAvatars } from '../avatars/useAvatars';
 import { AppShell } from '../components/AppShell';
+import { AvatarBadge } from '../components/AvatarBadge';
 import { Button, FieldError, Input, Label } from '../components/ui';
 import { cn } from '../lib/cn';
 
@@ -45,7 +52,8 @@ export function AvatarCreate() {
       return;
     }
     setErrors({});
-    const onSuccess = () => navigate(editing ? '/avatars' : '/', { replace: true });
+    // Tras crear o editar volvemos a la gestión de avatares (donde vive el listado).
+    const onSuccess = () => navigate('/avatars', { replace: true });
     if (editing) update.mutate({ id: avatarId, patch: parsed.data }, { onSuccess });
     else create.mutate(parsed.data, { onSuccess });
   };
@@ -53,6 +61,24 @@ export function AvatarCreate() {
   return (
     <AppShell title={editing ? 'Editar avatar' : 'Nuevo avatar'} showBack>
       <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
+        <div className="flex items-center gap-3">
+          {bowCategory && color ? (
+            <AvatarBadge bowCategory={bowCategory as BowCategory} color={color} size={56} />
+          ) : (
+            <span
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border border-dashed text-muted text-xs"
+              aria-hidden
+            >
+              ?
+            </span>
+          )}
+          <p className="text-muted text-sm">
+            {bowCategory && color
+              ? 'Vista previa del avatar'
+              : 'Elegí categoría y color para ver el avatar'}
+          </p>
+        </div>
+
         <div>
           <Label htmlFor="alias">Alias</Label>
           <Input

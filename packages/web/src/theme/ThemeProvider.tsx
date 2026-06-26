@@ -1,6 +1,7 @@
 import { type ReactNode, createContext, useCallback, useContext, useEffect, useState } from 'react';
 import {
   ACCENT_KEY,
+  DEFAULT_ACCENT,
   THEME_KEY,
   type ThemeMode,
   applyTheme,
@@ -46,8 +47,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/** Fallback inerte cuando no hay provider (p. ej. en tests que montan una página suelta). */
+const FALLBACK_THEME: ThemeContextValue = {
+  mode: 'light',
+  accent: DEFAULT_ACCENT,
+  toggleMode: () => {},
+  setAccent: () => {},
+};
+
 export function useTheme(): ThemeContextValue {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme debe usarse dentro de <ThemeProvider>.');
-  return ctx;
+  return useContext(ThemeContext) ?? FALLBACK_THEME;
 }

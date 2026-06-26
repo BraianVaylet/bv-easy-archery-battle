@@ -18,16 +18,20 @@ test('flujo completo de torneo', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: 'Inicio' })).toBeVisible();
 
-  // ── Crear avatar ──
+  // ── Crear avatar (Inicio → Avatares → Nuevo avatar) ──
+  await page.getByRole('link', { name: 'Avatares' }).click();
   await page.getByRole('link', { name: 'Nuevo avatar' }).click();
   await page.getByLabel('Alias').fill('Robin');
   await page.getByRole('button', { name: 'Recurvo olímpico' }).click();
   await page.getByRole('button', { name: 'Azul' }).click();
   await page.getByRole('button', { name: 'Crear avatar' }).click();
 
+  // Vuelve a la gestión de avatares con el nuevo avatar en la lista.
   await expect(page.getByText('Robin')).toBeVisible();
 
-  // ── Crear torneo (sala, 1 tirada) ──
+  // ── Volver a Inicio y crear torneo (sala, 1 tirada) ──
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Inicio' })).toBeVisible();
   await page.getByRole('link', { name: 'Nuevo torneo' }).click();
   await page.getByLabel('Nombre').fill('Copa E2E');
   await page.getByLabel('Tiradas').fill('1');

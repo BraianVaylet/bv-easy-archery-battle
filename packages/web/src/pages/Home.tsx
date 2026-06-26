@@ -1,24 +1,33 @@
+import { LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
-import { useAvatars } from '../avatars/useAvatars';
 import { AppShell } from '../components/AppShell';
-import { AvatarChip } from '../components/AvatarChip';
-import { ThemeToggle } from '../components/ThemeToggle';
 import { TournamentCard } from '../components/TournamentCard';
 import { Button, EmptyState, Spinner } from '../components/ui';
 import { useTournaments } from '../tournaments/useTournaments';
 
-/** Home autenticado: torneos por estado + accesos a crear, y avatares. */
+/** Home autenticado: torneos por estado + accesos a crear torneo y gestionar avatares. */
 export function Home() {
   const { user, logout } = useAuth();
   const { tournaments, isLoading } = useTournaments();
-  const { avatars } = useAvatars();
 
   const enCurso = tournaments.filter((t) => t.status === 'en_curso');
   const finalizados = tournaments.filter((t) => t.status === 'finalizado');
 
   return (
-    <AppShell title="Inicio" action={<ThemeToggle />}>
+    <AppShell
+      title="Inicio"
+      action={
+        <button
+          type="button"
+          onClick={() => logout.mutate()}
+          aria-label="Cerrar sesión"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-fg hover:bg-surface-2"
+        >
+          <LogOut size={18} aria-hidden />
+        </button>
+      }
+    >
       <p className="mb-4 text-muted text-sm">
         Hola, <span className="font-medium text-fg">{user?.alias}</span>.
       </p>
@@ -27,9 +36,9 @@ export function Home() {
         <Link to="/tournaments/new">
           <Button className="w-full">Nuevo torneo</Button>
         </Link>
-        <Link to="/avatars/new">
+        <Link to="/avatars">
           <Button className="w-full" variant="secondary">
-            Nuevo avatar
+            Avatares
           </Button>
         </Link>
       </div>
@@ -69,26 +78,6 @@ export function Home() {
           </div>
         </section>
       )}
-
-      {avatars.length > 0 && (
-        <section className="mb-6">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="font-semibold text-fg">Mis avatares</h2>
-            <Link to="/avatars" className="text-primary text-sm hover:underline">
-              Gestionar
-            </Link>
-          </div>
-          <div className="flex flex-col gap-2">
-            {avatars.map((a) => (
-              <AvatarChip key={a.id} avatar={a} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <Button variant="ghost" className="w-full" onClick={() => logout.mutate()}>
-        Cerrar sesión
-      </Button>
     </AppShell>
   );
 }
