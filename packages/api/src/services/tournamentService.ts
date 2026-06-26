@@ -1,4 +1,5 @@
 import {
+  type AddParticipantsInput,
   type Avatar,
   BOW_CATEGORIES,
   DEFAULT_STAKE_MAP,
@@ -17,6 +18,7 @@ import {
   type TournamentPodium,
   type TournamentStats,
   type TournamentStatus,
+  type TournamentUpdateInput,
   buildPairs,
   participantStats,
   rankItems,
@@ -26,7 +28,19 @@ import {
 } from '@bv/shared';
 import { conflict, notFound } from '../lib/errors';
 import type { AvatarRepo } from '../repositories/avatarRepo';
-import type { ParticipantSeed, TournamentRepo } from '../repositories/tournamentRepo';
+import type {
+  MutateResult,
+  PairingInput,
+  ParticipantSeed,
+  RepairFn,
+  TournamentRepo,
+} from '../repositories/tournamentRepo';
+
+/** Traduce el resultado de una mutación que exige torneo en curso. */
+function ensureMutated(result: MutateResult): void {
+  if (result === 'not_found') throw notFound('El torneo no existe.');
+  if (result === 'not_open') throw conflict('El torneo no está en curso.');
+}
 
 interface PairableAvatar extends Pairable {
   avatar: Avatar;
@@ -112,6 +126,56 @@ export function createTournamentService(repo: TournamentRepo, avatarRepo: Avatar
       if (result === 'not_found') throw notFound('El torneo no existe.');
       if (result === 'already_finished') throw conflict('El torneo ya está finalizado.');
       if (result === 'incomplete') throw conflict('Faltan tiradas por completar.');
+      return detailView(repo, userId, id);
+    },
+
+    updateName(userId: number, id: number, input: TournamentUpdateInput): TournamentDetailView {
+      ensureMutated(repo.updateName(userId, id, input.name));
+      return detailView(repo, userId, id);
+    },
+
+    addRound(userId: number, id: number): TournamentDetailView {
+      ensureMutated(repo.addRound(userId, id));
+      return detailView(repo, userId, id);
+    },
+
+    addParticipants(userId: number, id: number, input: AddParticipantsInput): TournamentDetailView {
+      const detail = repo.getDetail(userId, id);
+      if (!detail) throw notFound('El torneo no existe.');
+      if (detail.status !== 'en_curso') throw conflict('El torneo no está en curso.');
+
+      const existingAvatarIds = new Set(detail.participants.map((p) => p.avatarId));
+      const useStake = usesStakes(detail.modality);
+      const stakeMap = detail.stakeMap;
+
+      const seeds: ParticipantSeed[] = input.avatarIds.map((avatarId) => {
+        if (existingAvatarIds.has(avatarId)) {
+          throw conflict('Ese avatar ya participa del torneo.');
+        }
+        const a = avatarRepo.findOwned(userId, avatarId);
+        if (!a) throw notFound('Uno de los avatares no existe.');
+        return {
+          avatarId: a.id,
+          alias: a.alias,
+          bowCategory: a.bowCategory,
+          color: a.color,
+          experience: a.experience,
+          stake: useStake && stakeMap ? stakeForCategory(stakeMap, a.bowCategory) : null,
+          pairIndex: 0,
+          pairPosition: 'A',
+        };
+      });
+
+      // Re-parea sobre todos (existentes + nuevos), determinista.
+      const repair: RepairFn = (parts: PairingInput[]) => {
+        const out = new Map<number, { pairIndex: number; pairPosition: 'A' | 'B' | 'C' }>();
+        for (const { item, pairIndex, position } of buildPairs(parts)) {
+          out.set(item.id, { pairIndex, pairPosition: position });
+        }
+        return out;
+      };
+
+      ensureMutated(repo.addParticipants(userId, id, seeds, repair));
       return detailView(repo, userId, id);
     },
 

@@ -10,6 +10,15 @@ import type {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/apiClient';
 
+/** Invalida detalle + listado de un torneo tras una mutación. */
+function useInvalidateTournament(id: number) {
+  const qc = useQueryClient();
+  return () => {
+    qc.invalidateQueries({ queryKey: [...TOURNAMENTS_KEY, id] });
+    qc.invalidateQueries({ queryKey: TOURNAMENTS_KEY });
+  };
+}
+
 export const TOURNAMENTS_KEY = ['tournaments'] as const;
 
 /** Lista los torneos del usuario (todos los estados). */
@@ -49,6 +58,34 @@ export function useFinishTournament(id: number) {
       qc.invalidateQueries({ queryKey: [...TOURNAMENTS_KEY, id] });
       qc.invalidateQueries({ queryKey: TOURNAMENTS_KEY });
     },
+  });
+}
+
+/** Editar el nombre de un torneo en curso. */
+export function useUpdateTournament(id: number) {
+  const invalidate = useInvalidateTournament(id);
+  return useMutation({
+    mutationFn: (name: string) => api.patch<TournamentDetailView>(`/tournaments/${id}`, { name }),
+    onSuccess: invalidate,
+  });
+}
+
+/** Agregar participantes (avatares) a un torneo en curso. */
+export function useAddParticipants(id: number) {
+  const invalidate = useInvalidateTournament(id);
+  return useMutation({
+    mutationFn: (avatarIds: number[]) =>
+      api.post<TournamentDetailView>(`/tournaments/${id}/participants`, { avatarIds }),
+    onSuccess: invalidate,
+  });
+}
+
+/** Agregar una tirada a un torneo en curso. */
+export function useAddRound(id: number) {
+  const invalidate = useInvalidateTournament(id);
+  return useMutation({
+    mutationFn: () => api.post<TournamentDetailView>(`/tournaments/${id}/rounds`),
+    onSuccess: invalidate,
   });
 }
 

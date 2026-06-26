@@ -1,4 +1,10 @@
-import { TOURNAMENT_STATUSES, type TournamentStatus, tournamentCreateSchema } from '@bv/shared';
+import {
+  TOURNAMENT_STATUSES,
+  type TournamentStatus,
+  addParticipantsSchema,
+  tournamentCreateSchema,
+  tournamentUpdateSchema,
+} from '@bv/shared';
 import { Hono } from 'hono';
 import { validationError } from '../lib/errors';
 import { requireCsrf } from '../middleware/auth';
@@ -31,6 +37,23 @@ export function tournamentRoutes(service: TournamentService) {
   r.get('/:id', (c) => {
     const id = parseId(c.req.param('id'));
     return c.json(service.getDetailView(c.get('userId'), id));
+  });
+
+  r.patch('/:id', requireCsrf, async (c) => {
+    const id = parseId(c.req.param('id'));
+    const data = await parseBody(c, tournamentUpdateSchema);
+    return c.json(service.updateName(c.get('userId'), id, data));
+  });
+
+  r.post('/:id/participants', requireCsrf, async (c) => {
+    const id = parseId(c.req.param('id'));
+    const data = await parseBody(c, addParticipantsSchema);
+    return c.json(service.addParticipants(c.get('userId'), id, data));
+  });
+
+  r.post('/:id/rounds', requireCsrf, (c) => {
+    const id = parseId(c.req.param('id'));
+    return c.json(service.addRound(c.get('userId'), id));
   });
 
   r.post('/:id/finish', requireCsrf, (c) => {

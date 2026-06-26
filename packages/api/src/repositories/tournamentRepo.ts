@@ -31,6 +31,22 @@ export interface ParticipantSeed {
 /** Resultado de intentar finalizar un torneo. */
 export type FinishResult = 'ok' | 'not_found' | 'already_finished' | 'incomplete';
 
+/** Resultado de una mutación que exige torneo existente y en curso. */
+export type MutateResult = 'ok' | 'not_found' | 'not_open';
+
+/** Participante mínimo para re-parear al agregar gente. */
+export interface PairingInput {
+  id: number;
+  alias: string;
+  bowCategory: BowCategory;
+  stake: Stake | null;
+}
+
+/** Recalcula el pareo sobre el conjunto completo de participantes. */
+export type RepairFn = (
+  parts: PairingInput[],
+) => Map<number, { pairIndex: number; pairPosition: PairPosition }>;
+
 /** Datos para estadísticas de un participante (o motivo de fallo). */
 export type ParticipantStatsData =
   | { ok: true; modality: Modality; ends: StatEnd[] }
@@ -175,6 +191,24 @@ export function createTournamentRepo(db: DB) {
   const markFinished = db.prepare(
     "UPDATE tournaments SET status = 'finalizado', finished_at = ? WHERE id = ?",
   );
+  const updateNameStmt = db.prepare(
+    "UPDATE tournaments SET name = ? WHERE id = ? AND user_id = ? AND status = 'en_curso'",
+  );
+  const maxSeq = db.prepare<[number], { m: number }>(
+    'SELECT COALESCE(MAX(seq), 0) AS m FROM rounds WHERE tournament_id = ?',
+  );
+  const allForPairing = db.prepare<
+    [number],
+    { id: number; alias: string; bow_category: string; stake: string | null }
+  >(
+    'SELECT id, alias, bow_category, stake FROM tournament_participants WHERE tournament_id = ? ORDER BY id',
+  );
+  const updatePairing = db.prepare(
+    'UPDATE tournament_participants SET pair_index = ?, pair_position = ? WHERE id = ?',
+  );
+  const reopenCompletedRounds = db.prepare(
+    "UPDATE rounds SET status = 'en_proceso', completed_at = NULL WHERE tournament_id = ? AND status = 'completa'",
+  );
   const participantInTournament = db.prepare<[number, number], { id: number }>(
     'SELECT id FROM tournament_participants WHERE id = ? AND tournament_id = ?',
   );
@@ -193,6 +227,51 @@ export function createTournamentRepo(db: DB) {
     markFinished.run(now(), id);
     return 'ok';
   });
+
+  const addRoundTx = db.transaction((userId: number, id: number): MutateResult => {
+    const t = findTournament.get(id, userId);
+    if (!t) return 'not_found';
+    if (t.status !== 'en_curso') return 'not_open';
+    const seq = (maxSeq.get(id)?.m ?? 0) + 1;
+    insertRound.run(id, seq, t.arrows_per_end, now());
+    return 'ok';
+  });
+
+  const addParticipantsTx = db.transaction(
+    (userId: number, id: number, seeds: ParticipantSeed[], repair: RepairFn): MutateResult => {
+      const t = findStatus.get(id, userId);
+      if (!t) return 'not_found';
+      if (t.status !== 'en_curso') return 'not_open';
+      const ts = now();
+      for (const p of seeds) {
+        insertParticipant.run(
+          id,
+          p.avatarId,
+          p.alias,
+          p.bowCategory,
+          p.color,
+          p.experience,
+          p.stake,
+          p.pairIndex,
+          p.pairPosition,
+          ts,
+        );
+      }
+      // Re-parea sobre el conjunto completo y reabre las tiradas ya completas
+      // (los nuevos arqueros deben cargarlas).
+      const parts: PairingInput[] = allForPairing.all(id).map((r) => ({
+        id: r.id,
+        alias: r.alias,
+        bowCategory: r.bow_category as BowCategory,
+        stake: r.stake as Stake | null,
+      }));
+      for (const [pid, a] of repair(parts)) {
+        updatePairing.run(a.pairIndex, a.pairPosition, pid);
+      }
+      reopenCompletedRounds.run(id);
+      return 'ok';
+    },
+  );
 
   const create = db.transaction((userId: number, data: CreateTournamentData): number => {
     const ts = now();
@@ -251,6 +330,21 @@ export function createTournamentRepo(db: DB) {
     },
     finish(userId: number, id: number): FinishResult {
       return finish(userId, id);
+    },
+    updateName(userId: number, id: number, name: string): MutateResult {
+      if (updateNameStmt.run(name, id, userId).changes > 0) return 'ok';
+      return findStatus.get(id, userId) ? 'not_open' : 'not_found';
+    },
+    addRound(userId: number, id: number): MutateResult {
+      return addRoundTx(userId, id);
+    },
+    addParticipants(
+      userId: number,
+      id: number,
+      seeds: ParticipantSeed[],
+      repair: RepairFn,
+    ): MutateResult {
+      return addParticipantsTx(userId, id, seeds, repair);
     },
     getParticipants(userId: number, id: number): TournamentParticipant[] | undefined {
       if (!findStatus.get(id, userId)) return undefined;

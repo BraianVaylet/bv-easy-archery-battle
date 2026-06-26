@@ -42,6 +42,22 @@ export const tournamentCreateSchema = z
 
 export type TournamentCreateInput = z.infer<typeof tournamentCreateSchema>;
 
+/** Editar un torneo en curso (por ahora, solo el nombre). */
+export const tournamentUpdateSchema = z.object({ name }).strict();
+export type TournamentUpdateInput = z.infer<typeof tournamentUpdateSchema>;
+
+/** Agregar participantes (avatares) a un torneo en curso. */
+export const addParticipantsSchema = z
+  .object({
+    avatarIds: z
+      .array(z.number().int().positive())
+      .min(1, 'Agregá al menos un participante.')
+      .max(LIMITS.participants.max, `Máximo ${LIMITS.participants.max} participantes.`)
+      .refine((ids) => new Set(ids).size === ids.length, 'Hay participantes repetidos.'),
+  })
+  .strict();
+export type AddParticipantsInput = z.infer<typeof addParticipantsSchema>;
+
 /**
  * Autosave de un end. Solo `arrows` (tokens): el servidor deriva total y
  * contadores con `validateEndScore`; nunca confía en valores del cliente.

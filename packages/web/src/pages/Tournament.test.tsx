@@ -1,16 +1,32 @@
-import type { TournamentDetailView, TournamentParticipant, TournamentRound } from '@bv/shared';
-import { render, screen } from '@testing-library/react';
+import type {
+  Avatar,
+  TournamentDetailView,
+  TournamentParticipant,
+  TournamentRound,
+} from '@bv/shared';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-const { state, finishMutate } = vi.hoisted(() => ({
-  state: { tournament: undefined as TournamentDetailView | undefined },
+const { state, finishMutate, addMutate } = vi.hoisted(() => ({
+  state: {
+    tournament: undefined as TournamentDetailView | undefined,
+    avatars: [] as Avatar[],
+  },
   finishMutate: vi.fn(),
+  addMutate: vi.fn(),
 }));
 
+const noopMut = { mutate: vi.fn(), isPending: false, error: null };
 vi.mock('../tournaments/useTournaments', () => ({
   useTournament: () => ({ tournament: state.tournament, isLoading: false, isError: false }),
   useFinishTournament: () => ({ mutate: finishMutate, isPending: false, error: null }),
+  useAddRound: () => noopMut,
+  useUpdateTournament: () => noopMut,
+  useAddParticipants: () => ({ mutate: addMutate, isPending: false, error: null }),
+}));
+vi.mock('../avatars/useAvatars', () => ({
+  useAvatars: () => ({ avatars: state.avatars, isLoading: false }),
 }));
 
 import { Tournament } from './Tournament';
@@ -100,6 +116,7 @@ describe('Tournament (FE-7)', () => {
   });
 
   it('habilita Podios y Finalizar cuando todo está completo', () => {
+    state.avatars = [];
     state.tournament = fixture({ rounds: [round(1, 'completa'), round(2, 'completa')] });
     renderPage();
     expect(screen.getByRole('link', { name: 'Ver podios' })).toHaveAttribute(
@@ -107,5 +124,29 @@ describe('Tournament (FE-7)', () => {
       '/tournaments/1/podium',
     );
     expect(screen.getByRole('button', { name: 'Finalizar torneo' })).toBeInTheDocument();
+  });
+
+  it('agrega participantes disponibles a un torneo en curso', () => {
+    state.avatars = [
+      {
+        id: 9,
+        alias: 'Nuevo',
+        bowCategory: 'compuesto',
+        color: 'red',
+        experience: 'senior',
+        createdAt: 0,
+        updatedAt: 0,
+      },
+    ];
+    state.tournament = fixture({});
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /Agregar participantes/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Nuevo/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Agregar (1)' }));
+    expect(addMutate).toHaveBeenCalledWith(
+      [9],
+      expect.objectContaining({ onSuccess: expect.any(Function) }),
+    );
   });
 });

@@ -307,3 +307,105 @@ describe('tournaments — finalizar (BE-9)', () => {
     expect((await finish(id, jar2)).status).toBe(404);
   });
 });
+
+describe('tournaments — editar en curso (agregar participantes/tirada)', () => {
+  let app: App;
+  let jar: Jar;
+
+  beforeEach(async () => {
+    app = createApp(createDb(':memory:'));
+    jar = await registerUser(app);
+  });
+
+  async function seed(): Promise<{ id: number; pid: number }> {
+    const a = await makeAvatar(app, jar, 'Ana', 'compuesto');
+    const res = await createTournament(app, jar, {
+      name: 'Editable',
+      modality: 'sala',
+      roundsCount: 1,
+      arrowsPerEnd: 1,
+      avatarIds: [a],
+    });
+    const t = (await res.json()) as TournamentDetail;
+    return { id: t.id, pid: t.participants[0]?.id ?? 0 };
+  }
+
+  const detail = async (id: number) =>
+    (await (
+      await app.request(`/api/tournaments/${id}`, { headers: { cookie: cookieHeader(jar) } })
+    ).json()) as TournamentDetailView;
+
+  it('PATCH actualiza el nombre del torneo en curso', async () => {
+    const { id } = await seed();
+    const res = await jsonReq(app, `/api/tournaments/${id}`, 'PATCH', { name: 'Nuevo' }, jar);
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as TournamentDetailView).name).toBe('Nuevo');
+  });
+
+  it('POST /rounds agrega una tirada (seq incremental)', async () => {
+    const { id } = await seed();
+    const res = await jsonReq(app, `/api/tournaments/${id}/rounds`, 'POST', null, jar);
+    expect(res.status).toBe(200);
+    const t = (await res.json()) as TournamentDetailView;
+    expect(t.rounds.map((r) => r.seq)).toEqual([1, 2]);
+  });
+
+  it('agregar participante re-parea y reabre tiradas completas (en_proceso)', async () => {
+    const { id, pid } = await seed();
+    // Completa la única tirada con el participante inicial.
+    await jsonReq(
+      app,
+      `/api/tournaments/${id}/rounds/1/scores/${pid}`,
+      'PUT',
+      { arrows: ['X'] },
+      jar,
+    );
+    expect((await detail(id)).rounds[0]?.status).toBe('completa');
+
+    const b = await makeAvatar(app, jar, 'Beto', 'cazador');
+    const res = await jsonReq(
+      app,
+      `/api/tournaments/${id}/participants`,
+      'POST',
+      { avatarIds: [b] },
+      jar,
+    );
+    expect(res.status).toBe(200);
+    const t = (await res.json()) as TournamentDetailView;
+    expect(t.participants).toHaveLength(2);
+    // El nuevo arquero debe cargar la tirada ya completada → vuelve a en_proceso.
+    expect(t.rounds[0]?.status).toBe('en_proceso');
+    // Rollups del nuevo en cero.
+    const beto = t.participants.find((p) => p.alias === 'Beto');
+    expect(beto?.totalScore).toBe(0);
+    expect(beto?.endsCompleted).toBe(0);
+  });
+
+  it('rechaza agregar un avatar que ya participa (409)', async () => {
+    const a = await makeAvatar(app, jar, 'Ana', 'compuesto');
+    const res = await createTournament(app, jar, {
+      name: 'Dup',
+      modality: 'sala',
+      roundsCount: 1,
+      arrowsPerEnd: 1,
+      avatarIds: [a],
+    });
+    const id = ((await res.json()) as TournamentDetail).id;
+    const dup = await jsonReq(
+      app,
+      `/api/tournaments/${id}/participants`,
+      'POST',
+      { avatarIds: [a] },
+      jar,
+    );
+    expect(dup.status).toBe(409);
+  });
+
+  it('respeta ownership: otro usuario no edita (404)', async () => {
+    const { id } = await seed();
+    const jar2 = await registerUser(app, 'otro');
+    expect(
+      (await jsonReq(app, `/api/tournaments/${id}`, 'PATCH', { name: 'Hack' }, jar2)).status,
+    ).toBe(404);
+  });
+});
