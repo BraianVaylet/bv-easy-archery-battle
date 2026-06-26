@@ -37,7 +37,7 @@ export function Tournament() {
   const finish = useFinishTournament(tid);
   const addRound = useAddRound(tid);
   const deleteRound = useDeleteRound(tid);
-  const [editingName, setEditingName] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
 
   if (isLoading) {
@@ -72,9 +72,13 @@ export function Tournament() {
             <>
               <button
                 type="button"
-                aria-label="Editar nombre"
-                className={TOOLBAR_BTN}
-                onClick={() => setEditingName((v) => !v)}
+                aria-label="Editar torneo"
+                aria-pressed={editing}
+                className={cn(
+                  TOOLBAR_BTN,
+                  editing && 'border-primary bg-primary-soft text-primary',
+                )}
+                onClick={() => setEditing((v) => !v)}
               >
                 <Pencil size={16} aria-hidden />
               </button>
@@ -94,7 +98,7 @@ export function Tournament() {
         </div>
       </div>
 
-      {editingName && <EditName tid={tid} name={t.name} onDone={() => setEditingName(false)} />}
+      {editing && <EditName tid={tid} name={t.name} />}
 
       <section className="mb-6">
         <h2 className="mb-2 font-semibold text-fg">Tiradas</h2>
@@ -115,7 +119,7 @@ export function Tournament() {
                   {ROUND_BADGE[r.status].label}
                 </span>
               </Link>
-              {!finished && t.rounds.length > 1 && (
+              {!finished && editing && t.rounds.length > 1 && (
                 <button
                   type="button"
                   aria-label={`Eliminar tirada ${r.seq}`}
@@ -182,8 +186,8 @@ export function Tournament() {
   );
 }
 
-/** Edición inline del nombre del torneo. */
-function EditName({ tid, name, onDone }: { tid: number; name: string; onDone: () => void }) {
+/** Edición inline del nombre del torneo (dentro del modo edición). */
+function EditName({ tid, name }: { tid: number; name: string }) {
   const [value, setValue] = useState(name);
   const update = useUpdateTournament(tid);
   return (
@@ -194,11 +198,7 @@ function EditName({ tid, name, onDone }: { tid: number; name: string; onDone: ()
         maxLength={60}
         aria-label="Nombre del torneo"
       />
-      <Button
-        size="sm"
-        loading={update.isPending}
-        onClick={() => update.mutate(value.trim(), { onSuccess: onDone })}
-      >
+      <Button size="sm" loading={update.isPending} onClick={() => update.mutate(value.trim())}>
         <Check size={16} aria-hidden /> Guardar
       </Button>
     </div>

@@ -128,21 +128,26 @@ describe('Tournament (FE-7)', () => {
     expect(screen.getByRole('button', { name: 'Finalizar torneo' })).toBeInTheDocument();
   });
 
-  it('elimina una tirada con confirmación (varias tiradas)', () => {
+  it('eliminar tirada está oculto hasta entrar en modo edición (lápiz)', () => {
     state.avatars = [];
     state.tournament = fixture({ rounds: [round(1, 'pendiente'), round(2, 'pendiente')] });
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderPage();
 
+    // Oculto por defecto.
+    expect(screen.queryByRole('button', { name: 'Eliminar tirada 2' })).toBeNull();
+    // Aparece al activar edición.
+    fireEvent.click(screen.getByRole('button', { name: 'Editar torneo' }));
     fireEvent.click(screen.getByRole('button', { name: 'Eliminar tirada 2' }));
     expect(deleteMutate).toHaveBeenCalledWith(2);
     confirmSpy.mockRestore();
   });
 
-  it('no muestra eliminar si hay una sola tirada', () => {
+  it('no muestra eliminar con una sola tirada, aun en edición', () => {
     state.avatars = [];
     state.tournament = fixture({ rounds: [round(1, 'pendiente')] });
     renderPage();
+    fireEvent.click(screen.getByRole('button', { name: 'Editar torneo' }));
     expect(screen.queryByRole('button', { name: 'Eliminar tirada 1' })).toBeNull();
   });
 
