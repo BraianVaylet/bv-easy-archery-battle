@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { AppShell } from '../components/AppShell';
+import { EvolutionChart } from '../components/EvolutionChart';
 import { StatTile } from '../components/StatTile';
 import { Card, Spinner } from '../components/ui';
 import { useParticipantStats, useTournament } from '../tournaments/useTournaments';
@@ -47,7 +48,8 @@ export function ParticipantStats() {
       {stats.evolution.length > 0 && (
         <section className="mb-5">
           <h2 className="mb-2 font-semibold text-fg">Evolución por tirada</h2>
-          <Card>
+          <Card className="flex flex-col gap-4">
+            <EvolutionChart points={stats.evolution.map((e) => ({ seq: e.seq, total: e.total }))} />
             <ol className="flex flex-col gap-1.5">
               {stats.evolution.map((e) => (
                 <li key={e.seq} className="flex items-center gap-3 text-sm">

@@ -1,7 +1,7 @@
 import type { TournamentParticipant, TournamentPodium } from '@bv/shared';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const { state } = vi.hoisted(() => ({
   state: { podium: undefined as TournamentPodium | undefined },
@@ -9,6 +9,11 @@ const { state } = vi.hoisted(() => ({
 
 vi.mock('../tournaments/useTournaments', () => ({
   usePodium: () => ({ podium: state.podium, isLoading: false, isError: false }),
+  useTournament: () => ({
+    tournament: { name: 'Copa Otoño' },
+    isLoading: false,
+    isError: false,
+  }),
 }));
 
 import { Podium } from './Podium';
@@ -74,5 +79,48 @@ describe('Podium (FE-9)', () => {
     };
     renderPage();
     expect(screen.queryByRole('heading', { name: 'Escuela' })).toBeNull();
+  });
+});
+
+describe('Podium — exportar/compartir (P2)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('Imprimir invoca window.print', () => {
+    state.podium = {
+      general: [{ rank: 1, participant: p(1, 'Ana', 30) }],
+      byCategory: [],
+      escuela: [],
+    };
+    const printSpy = vi.fn();
+    vi.stubGlobal('print', printSpy);
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Imprimir' }));
+    expect(printSpy).toHaveBeenCalledOnce();
+  });
+
+  it('Compartir copia al portapapeles cuando no hay Web Share', async () => {
+    state.podium = {
+      general: [
+        { rank: 1, participant: p(1, 'Ana', 30) },
+        { rank: 2, participant: p(2, 'Beto', 24) },
+      ],
+      byCategory: [],
+      escuela: [],
+    };
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    // Sin Web Share (undefined en jsdom) → cae al portapapeles.
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Compartir' }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledOnce());
+    const text = String(writeText.mock.calls[0]?.[0] ?? '');
+    expect(text).toContain('Ana');
+    expect(text).toContain('Beto');
+    expect(await screen.findByRole('status')).toHaveTextContent('copiado');
   });
 });

@@ -66,3 +66,26 @@ body {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+/* ── Impresión: solo el contenido marcado; sin chrome de la app ───────────── */
+@media print {
+  /* Oculta header de la app y cualquier elemento no imprimible. */
+  header,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  /* Sin recortes ni sticky al imprimir; deja fluir el contenido. */
+  main {
+    padding: 0 !important;
+  }
+  .print-area {
+    max-width: none;
+  }
+  /* Evita cortar una tarjeta/podio a mitad de página. */
+  .print-area .break-avoid {
+    break-inside: avoid;
+  }
+}
