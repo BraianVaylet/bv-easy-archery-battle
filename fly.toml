@@ -1,0 +1,42 @@
+# Fly.io — BV Archery Battle (contenedor único + volumen persistente para SQLite).
+# Deploy:
+#   fly launch --no-deploy            # crea la app (ajusta el nombre si ya existe)
+#   fly volumes create bv_data --region gru --size 1
+#   fly secrets set SESSION_SECRET=$(openssl rand -hex 32)
+#   fly deploy
+
+app = "bv-archery-battle"
+primary_region = "gru"  # São Paulo — el más cercano al autor (AR); cambiar si se prefiere.
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8787"
+  DATABASE_PATH = "/data/app.db"
+  WEB_DIST = "public"
+  COOKIE_SECURE = "true"
+  # SESSION_SECRET NO va aquí: se setea con `fly secrets set SESSION_SECRET=...`.
+
+[[mounts]]
+  source = "bv_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0  # escala a 0 cuando no hay tráfico (menor costo).
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
