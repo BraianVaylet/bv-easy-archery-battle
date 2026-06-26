@@ -56,8 +56,9 @@ RUN printf '#!/bin/sh\nset -e\nmkdir -p /data\nchown -R node:node /data || true\
     && chmod +x /usr/local/bin/docker-entrypoint.sh
 
 WORKDIR /app/packages/api
-VOLUME /data
 EXPOSE 8787
+# Sin `VOLUME /data`: Railway lo rechaza y usa sus propios Volumes (mount en /data).
+# El entrypoint crea y da permisos a /data, sirviendo para Railway, Fly, Render y `docker run -v`.
 
 # Healthcheck a /api/health (fetch global de Node 20).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
