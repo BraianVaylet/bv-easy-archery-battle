@@ -8,11 +8,21 @@ import type { AppEnv } from '../types';
 export function avatarRoutes(service: AvatarService) {
   const r = new Hono<AppEnv>();
 
-  r.get('/', (c) => c.json(service.list(c.get('userId'))));
+  // `?archived=true` devuelve los avatares archivados (historial); por defecto, los activos.
+  r.get('/', (c) => {
+    const userId = c.get('userId');
+    const archived = c.req.query('archived') === 'true';
+    return c.json(archived ? service.listArchived(userId) : service.list(userId));
+  });
 
   r.post('/', requireCsrf, async (c) => {
     const data = await parseBody(c, avatarCreateSchema);
     return c.json(service.create(c.get('userId'), data), 201);
+  });
+
+  r.post('/:id/restore', requireCsrf, (c) => {
+    const id = parseId(c.req.param('id'));
+    return c.json(service.unarchive(c.get('userId'), id));
   });
 
   r.get('/:id', (c) => {

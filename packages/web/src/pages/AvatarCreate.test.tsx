@@ -10,6 +10,7 @@ vi.mock('../avatars/useAvatars', () => ({
     avatars: [],
     isLoading: false,
     create: { mutate: createMutate, isPending: false, error: null },
+    update: { mutate: vi.fn(), isPending: false, error: null },
   }),
 }));
 

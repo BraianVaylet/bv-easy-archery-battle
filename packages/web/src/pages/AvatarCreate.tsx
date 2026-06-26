@@ -1,19 +1,36 @@
 import { AVATAR_COLORS, BOW_CATEGORIES, BOW_CATEGORY_LABELS, avatarCreateSchema } from '@bv/shared';
-import { type FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { type FormEvent, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAvatars } from '../avatars/useAvatars';
 import { AppShell } from '../components/AppShell';
 import { Button, FieldError, Input, Label } from '../components/ui';
 import { cn } from '../lib/cn';
 
+/** Formulario de avatar: crea uno nuevo o edita uno existente (ruta con `:id`). */
 export function AvatarCreate() {
-  const { create } = useAvatars();
+  const { id } = useParams();
+  const editing = id !== undefined;
+  const avatarId = Number(id);
+  const { avatars, create, update } = useAvatars();
   const navigate = useNavigate();
+
   const [alias, setAlias] = useState('');
   const [bowCategory, setBowCategory] = useState('');
   const [color, setColor] = useState('');
   const [beginner, setBeginner] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // En modo edición, precarga los campos cuando el avatar está disponible.
+  const current = editing ? avatars.find((a) => a.id === avatarId) : undefined;
+  useEffect(() => {
+    if (!current) return;
+    setAlias(current.alias);
+    setBowCategory(current.bowCategory);
+    setColor(current.color);
+    setBeginner(current.experience === 'escuela');
+  }, [current]);
+
+  const mutation = editing ? update : create;
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -28,11 +45,13 @@ export function AvatarCreate() {
       return;
     }
     setErrors({});
-    create.mutate(parsed.data, { onSuccess: () => navigate('/', { replace: true }) });
+    const onSuccess = () => navigate(editing ? '/avatars' : '/', { replace: true });
+    if (editing) update.mutate({ id: avatarId, patch: parsed.data }, { onSuccess });
+    else create.mutate(parsed.data, { onSuccess });
   };
 
   return (
-    <AppShell title="Nuevo avatar" showBack>
+    <AppShell title={editing ? 'Editar avatar' : 'Nuevo avatar'} showBack>
       <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
         <div>
           <Label htmlFor="alias">Alias</Label>
@@ -101,10 +120,10 @@ export function AvatarCreate() {
           Principiante (categoría escuela)
         </label>
 
-        {create.error && <FieldError>{(create.error as Error).message}</FieldError>}
+        {mutation.error && <FieldError>{(mutation.error as Error).message}</FieldError>}
 
-        <Button type="submit" size="lg" loading={create.isPending}>
-          Crear avatar
+        <Button type="submit" size="lg" loading={mutation.isPending}>
+          {editing ? 'Guardar cambios' : 'Crear avatar'}
         </Button>
       </form>
     </AppShell>

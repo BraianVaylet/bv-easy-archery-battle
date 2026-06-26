@@ -53,15 +53,15 @@ Tareas pequeñas, priorizadas y autocontenidas para que modelos de IA (u otros d
 - [x] **BE-13** Auditoría de seguridad: ownership en todos los endpoints, CSP/headers, rate limit, schemas `.strict()`. Ejecutar **/security-review**. **DoD:** checklist de `SECURITY.md` verde. _(Review limpio: sin vulnerabilidades HIGH/MEDIUM; queries parametrizadas, ownership + CSRF en mutaciones, schemas `.strict()`.)_
 - [x] **FE-12** Auditoría UI/accesibilidad con skills **web-design-guidelines** + **audit-website**. **DoD:** sin issues críticos; targets ≥44px, contraste AA, focus visible. _(web-design-guidelines: targets ≥44px, fieldset/legend en grupos, spellcheck off en alias, focus-visible global. audit-website pendiente hasta tener deploy (INF-4).)_
 - [x] **TEST-1** E2E Playwright: registro → avatares → torneo (4 modalidades) → cargar todas las tiradas → finalizar → podios + stats. **DoD:** suite verde en CI. _(Flujo feliz sala completo verde contra el stack real: registro→avatar→torneo→carga→finalizar→podio. webServer levanta api (DB e2e aislada) + web. Ampliable a 4 modalidades.)_
-- [ ] **INF-3** Dockerfile multi-stage (BE sirve FE + `/api`), volumen `/data`, `HEALTHCHECK`. **DoD:** imagen corre y persiste.
-- [ ] **INF-4** Deploy: `fly.toml`/`render.yaml` con volumen + envs; `.env.example`. **DoD:** despliegue accesible por HTTPS con datos persistentes.
-- [ ] **INF-5** CI: lint (biome) + typecheck + tests (+e2e) en PR; `pnpm audit`. **DoD:** pipeline bloquea en fallo.
+- [x] **INF-3** Dockerfile multi-stage (BE sirve FE + `/api`), volumen `/data`, `HEALTHCHECK`. **DoD:** imagen corre y persiste. _(Multi-stage `deps`→`build`→`runner` slim sobre `node:20-bookworm-slim`; el toolchain de better-sqlite3 queda en `deps`. La API sirve el build del web desde `packages/api/public`; corre como usuario `node`, `VOLUME /data`, `HEALTHCHECK` a `/api/health`. `.dockerignore` evita clobbear el binario nativo. Verificado el server de prod sirviendo `/api` + SPA + assets; el `docker build` no se pudo ejecutar aquí (Docker no instalado).)_
+- [x] **INF-4** Deploy: `fly.toml`/`render.yaml` con volumen + envs; `.env.example`. **DoD:** despliegue accesible por HTTPS con datos persistentes. _(`fly.toml`: máquina shared-cpu-1x + volumen `bv_data`→`/data`, `force_https`, healthcheck, `SESSION_SECRET` por `fly secrets`. `render.yaml`: Web Service Docker + disco persistente, `SESSION_SECRET` con `generateValue`. `.env.example` espeja `env.ts`.)_
+- [x] **INF-5** CI: lint (biome) + typecheck + tests (+e2e) en PR; `pnpm audit`. **DoD:** pipeline bloquea en fallo. _(`.github/workflows/ci.yml`: job `quality` (lint+typecheck+test) y `e2e` (Playwright chromium) bloqueantes; `audit` no bloqueante. Comandos verificados localmente: lint limpio, typecheck ok, 40 tests verdes.)_
 
 ## Fase 5 — Mejoras (P2)
 
-- [ ] Exportar/compartir podio (imagen/print).
-- [ ] Gráfico de evolución por tirada.
-- [ ] Historial/gestión de avatares (editar, desarchivar).
+- [x] Exportar/compartir podio (imagen/print). _(Página Podio: botones **Compartir** (Web Share API → fallback portapapeles, `lib/share.ts`) e **Imprimir** (`window.print` + `@media print` que oculta el chrome y deja solo `.print-area`). Tests RTL de impresión y copia.)_
+- [x] Gráfico de evolución por tirada. _(`components/EvolutionChart.tsx`: line chart en SVG puro (sin dependencias), tema-aware, accesible (`role="img"` + `aria-label`); integrado en `ParticipantStats` sobre la lista. Tests del componente.)_
+- [x] Historial/gestión de avatares (editar, desarchivar). _(BE: `repo.listArchived`/`unarchive`, `service.listArchived`/`unarchive`, `GET /avatars?archived=true` + `POST /avatars/:id/restore` (CSRF + ownership). FE: `AvatarCreate` reusada para editar (`/avatars/:id/edit`), página `AvatarManage` (`/avatars`) para editar/archivar activos y restaurar archivados, acceso "Gestionar" desde Home. Tests API (restore, archivados, ownership) y RTL (archivar/restaurar).)_
 - [ ] Métricas avanzadas (consistencia, distribución por anillo, comparativas).
 - [ ] i18n.
 

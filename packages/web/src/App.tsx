@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { ProtectedRoute } from './auth/ProtectedRoute';
 import { PublicOnlyRoute } from './auth/PublicOnlyRoute';
 import { AvatarCreate } from './pages/AvatarCreate';
+import { AvatarManage } from './pages/AvatarManage';
 import { Home } from './pages/Home';
 import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
@@ -27,7 +28,9 @@ export function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Home />} />
+        <Route path="/avatars" element={<AvatarManage />} />
         <Route path="/avatars/new" element={<AvatarCreate />} />
+        <Route path="/avatars/:id/edit" element={<AvatarCreate />} />
         <Route path="/tournaments/new" element={<TournamentCreate />} />
         <Route path="/tournaments/:id" element={<Tournament />} />
         <Route path="/tournaments/:id/rounds/:seq" element={<Round />} />

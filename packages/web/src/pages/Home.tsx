@@ -72,7 +72,12 @@ export function Home() {
 
       {avatars.length > 0 && (
         <section className="mb-6">
-          <h2 className="mb-2 font-semibold text-fg">Mis avatares</h2>
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="font-semibold text-fg">Mis avatares</h2>
+            <Link to="/avatars" className="text-primary text-sm hover:underline">
+              Gestionar
+            </Link>
+          </div>
           <div className="flex flex-col gap-2">
             {avatars.map((a) => (
               <AvatarChip key={a.id} avatar={a} />

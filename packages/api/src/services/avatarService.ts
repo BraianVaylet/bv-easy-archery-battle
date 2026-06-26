@@ -12,6 +12,9 @@ export function createAvatarService(repo: AvatarRepo) {
     list(userId: number): Avatar[] {
       return repo.list(userId);
     },
+    listArchived(userId: number): Avatar[] {
+      return repo.listArchived(userId);
+    },
     get(userId: number, id: number): Avatar {
       const a = repo.findOwned(userId, id);
       if (!a) throw notFound(NOT_FOUND);
@@ -41,6 +44,12 @@ export function createAvatarService(repo: AvatarRepo) {
     },
     archive(userId: number, id: number): void {
       if (!repo.archive(userId, id)) throw notFound(NOT_FOUND);
+    },
+    unarchive(userId: number, id: number): Avatar {
+      if (!repo.unarchive(userId, id)) throw notFound(NOT_FOUND);
+      const restored = repo.findOwned(userId, id);
+      if (!restored) throw notFound(NOT_FOUND);
+      return restored;
     },
   };
 }
