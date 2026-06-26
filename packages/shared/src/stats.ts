@@ -20,6 +20,10 @@ export interface ParticipantStats {
   averagePerEnd: number;
   /** Mejor tirada (mayor total), o null si no hay ends. */
   bestEnd: number | null;
+  /** Peor tirada (menor total), o null si no hay ends. */
+  worstEnd: number | null;
+  /** Consistencia: desvío estándar (poblacional) de los totales por tirada. Menor = más regular. */
+  consistency: number;
   xCount: number;
   mCount: number;
   innerCount: number;
@@ -41,9 +45,11 @@ export function participantStats(modality: Modality, ends: readonly StatEnd[]): 
   let mCount = 0;
   let innerCount = 0;
   let bestEnd: number | null = null;
+  let worstEnd: number | null = null;
 
   const ordered = [...ends].sort((a, b) => a.seq - b.seq);
   const evolution: ParticipantStats['evolution'] = [];
+  const endTotals: number[] = [];
   let cumulative = 0;
 
   for (const end of ordered) {
@@ -59,17 +65,30 @@ export function participantStats(modality: Modality, ends: readonly StatEnd[]): 
     }
     totalScore += endTotal;
     cumulative += endTotal;
+    endTotals.push(endTotal);
     evolution.push({ seq: end.seq, total: endTotal, cumulative });
     if (bestEnd === null || endTotal > bestEnd) bestEnd = endTotal;
+    if (worstEnd === null || endTotal < worstEnd) worstEnd = endTotal;
   }
+
+  const averagePerEnd = ordered.length ? totalScore / ordered.length : 0;
+  // Desvío estándar poblacional de los totales (0 si hay menos de 2 tiradas).
+  const consistency =
+    endTotals.length > 1
+      ? Math.sqrt(
+          endTotals.reduce((acc, t) => acc + (t - averagePerEnd) ** 2, 0) / endTotals.length,
+        )
+      : 0;
 
   return {
     endsCompleted: ordered.length,
     arrowsShot,
     totalScore,
     averagePerArrow: arrowsShot ? totalScore / arrowsShot : 0,
-    averagePerEnd: ordered.length ? totalScore / ordered.length : 0,
+    averagePerEnd,
     bestEnd,
+    worstEnd,
+    consistency,
     xCount,
     mCount,
     innerCount,
@@ -100,6 +119,49 @@ export interface TournamentStats {
   averageScore: number;
   bestScore: number | null;
   byCategory: CategoryStat[];
+}
+
+/** Un participante del campo para comparativas (rollups). */
+export interface FieldParticipant {
+  id: number;
+  totalScore: number;
+  bowCategory: BowCategory;
+}
+
+export interface ParticipantComparison {
+  generalAvg: number;
+  categoryAvg: number;
+  /** Posición 1-based en la general (empates comparten posición). */
+  rankGeneral: number;
+  totalParticipants: number;
+  rankCategory: number;
+  categoryParticipants: number;
+}
+
+/**
+ * Compara a un participante contra el resto del torneo: promedio y posición
+ * en la general y en su categoría. Puro; deriva de los rollups del campo.
+ */
+export function participantComparison(
+  targetId: number,
+  field: readonly FieldParticipant[],
+): ParticipantComparison | null {
+  const me = field.find((p) => p.id === targetId);
+  if (!me) return null;
+
+  const n = field.length;
+  const generalAvg = n ? field.reduce((a, p) => a + p.totalScore, 0) / n : 0;
+  const cat = field.filter((p) => p.bowCategory === me.bowCategory);
+  const categoryAvg = cat.length ? cat.reduce((a, p) => a + p.totalScore, 0) / cat.length : 0;
+
+  return {
+    generalAvg,
+    categoryAvg,
+    rankGeneral: 1 + field.filter((p) => p.totalScore > me.totalScore).length,
+    totalParticipants: n,
+    rankCategory: 1 + cat.filter((p) => p.totalScore > me.totalScore).length,
+    categoryParticipants: cat.length,
+  };
 }
 
 /** Estadísticas agregadas del torneo a partir de los rollups de participantes. */

@@ -1,3 +1,4 @@
+import { BOW_CATEGORY_LABELS, participantComparison } from '@bv/shared';
 import { useParams } from 'react-router-dom';
 import { AppShell } from '../components/AppShell';
 import { EvolutionChart } from '../components/EvolutionChart';
@@ -7,13 +8,37 @@ import { useParticipantStats, useTournament } from '../tournaments/useTournament
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/** Delta del participante vs un promedio (verde si supera, atenuado si no). */
+function Delta({ value, avg }: { value: number; avg: number }) {
+  const d = round2(value - avg);
+  const sign = d > 0 ? '+' : '';
+  return (
+    <span className={d >= 0 ? 'text-ok tabular-nums' : 'text-muted tabular-nums'}>
+      {sign}
+      {d}
+    </span>
+  );
+}
+
 export function ParticipantStats() {
   const { id, pid } = useParams();
   const tid = Number(id);
   const participantId = Number(pid);
   const { stats, isLoading, isError } = useParticipantStats(tid, participantId);
   const { tournament } = useTournament(tid);
-  const alias = tournament?.participants.find((p) => p.id === participantId)?.alias;
+  const me = tournament?.participants.find((p) => p.id === participantId);
+  const alias = me?.alias;
+
+  const comparison = tournament
+    ? participantComparison(
+        participantId,
+        tournament.participants.map((p) => ({
+          id: p.id,
+          totalScore: p.totalScore,
+          bowCategory: p.bowCategory,
+        })),
+      )
+    : null;
 
   if (isLoading) {
     return (
@@ -41,9 +66,45 @@ export function ParticipantStats() {
         <StatTile label="Prom/flecha" value={round2(stats.averagePerArrow)} />
         <StatTile label="Prom/tirada" value={round2(stats.averagePerEnd)} />
         <StatTile label="Mejor end" value={stats.bestEnd ?? '—'} />
+        <StatTile label="Peor end" value={stats.worstEnd ?? '—'} />
+        <StatTile label="Desvío σ" value={round2(stats.consistency)} />
         <StatTile label="X" value={stats.xCount} />
         <StatTile label="M" value={stats.mCount} />
       </div>
+
+      {comparison && comparison.totalParticipants > 1 && me && (
+        <section className="mb-5">
+          <h2 className="mb-2 font-semibold text-fg">Comparativas</h2>
+          <Card>
+            <ul className="flex flex-col gap-2 text-sm">
+              <li className="flex items-center justify-between">
+                <span className="text-muted">Posición general</span>
+                <span className="font-medium text-fg tabular-nums">
+                  #{comparison.rankGeneral} de {comparison.totalParticipants}
+                </span>
+              </li>
+              <li className="flex items-center justify-between">
+                <span className="text-muted">
+                  vs. promedio general ({round2(comparison.generalAvg)})
+                </span>
+                <Delta value={me.totalScore} avg={comparison.generalAvg} />
+              </li>
+              <li className="flex items-center justify-between">
+                <span className="text-muted">Posición {BOW_CATEGORY_LABELS[me.bowCategory]}</span>
+                <span className="font-medium text-fg tabular-nums">
+                  #{comparison.rankCategory} de {comparison.categoryParticipants}
+                </span>
+              </li>
+              <li className="flex items-center justify-between">
+                <span className="text-muted">
+                  vs. promedio categoría ({round2(comparison.categoryAvg)})
+                </span>
+                <Delta value={me.totalScore} avg={comparison.categoryAvg} />
+              </li>
+            </ul>
+          </Card>
+        </section>
+      )}
 
       {stats.evolution.length > 0 && (
         <section className="mb-5">

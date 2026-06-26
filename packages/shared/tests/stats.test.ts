@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { participantStats, tournamentStats } from '../src/stats';
+import { participantComparison, participantStats, tournamentStats } from '../src/stats';
 
 describe('participantStats', () => {
   const ends = [
@@ -43,6 +43,19 @@ describe('participantStats', () => {
     expect(s.distribution['1']).toBe(0); // token del set no usado
   });
 
+  it('calcula consistencia (desvío estándar de los totales) y peor tirada', () => {
+    const s = participantStats('sala', ends);
+    // totales 26 y 18, media 22 → varianza ((4)²+(4)²)/2 = 16 → desvío 4.
+    expect(s.consistency).toBeCloseTo(4, 5);
+    expect(s.worstEnd).toBe(18);
+  });
+
+  it('consistencia es 0 con una sola tirada', () => {
+    const s = participantStats('sala', [{ seq: 1, arrows: ['X', '9', '7'] }]);
+    expect(s.consistency).toBe(0);
+    expect(s.worstEnd).toBe(26);
+  });
+
   it('maneja el caso sin tiradas', () => {
     const s = participantStats('sala', []);
     expect(s.endsCompleted).toBe(0);
@@ -50,6 +63,8 @@ describe('participantStats', () => {
     expect(s.averagePerArrow).toBe(0);
     expect(s.averagePerEnd).toBe(0);
     expect(s.bestEnd).toBeNull();
+    expect(s.consistency).toBe(0);
+    expect(s.worstEnd).toBeNull();
   });
 
   it('respeta el set de cada modalidad (3D)', () => {
@@ -94,5 +109,28 @@ describe('tournamentStats', () => {
     expect(s.averageScore).toBe(0);
     expect(s.bestScore).toBeNull();
     expect(s.byCategory).toEqual([]);
+  });
+});
+
+describe('participantComparison', () => {
+  const field = [
+    { id: 1, totalScore: 44, bowCategory: 'compuesto' },
+    { id: 2, totalScore: 30, bowCategory: 'recurvo_olimpico' },
+    { id: 3, totalScore: 50, bowCategory: 'compuesto' },
+  ] as const;
+
+  it('compara contra el promedio general y de categoría, con posiciones', () => {
+    const c = participantComparison(1, [...field]);
+    expect(c).not.toBeNull();
+    expect(c?.generalAvg).toBeCloseTo((44 + 30 + 50) / 3, 5);
+    expect(c?.categoryAvg).toBe(47); // (44+50)/2
+    expect(c?.totalParticipants).toBe(3);
+    expect(c?.categoryParticipants).toBe(2);
+    expect(c?.rankGeneral).toBe(2); // solo 50 supera a 44
+    expect(c?.rankCategory).toBe(2);
+  });
+
+  it('devuelve null si el participante no está en el campo', () => {
+    expect(participantComparison(99, [...field])).toBeNull();
   });
 });

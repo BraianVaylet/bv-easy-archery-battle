@@ -36,6 +36,8 @@ describe('ParticipantStats (FE-11)', () => {
       averagePerArrow: 7.33,
       averagePerEnd: 22,
       bestEnd: 26,
+      worstEnd: 18,
+      consistency: 4,
       xCount: 1,
       mCount: 1,
       innerCount: 1,
@@ -86,5 +88,63 @@ describe('ParticipantStats (FE-11)', () => {
     expect(screen.getByText('Evolución por tirada')).toBeInTheDocument();
     expect(screen.getByText('Tirada 1')).toBeInTheDocument();
     expect(screen.getByText('Distribución por anillo')).toBeInTheDocument();
+    // Métricas avanzadas: desvío y peor end.
+    expect(screen.getByText('Desvío σ')).toBeInTheDocument();
+    expect(screen.getByText('Peor end')).toBeInTheDocument();
+  });
+
+  it('muestra comparativas (posición y delta vs promedios) con varios participantes', () => {
+    state.stats = {
+      endsCompleted: 1,
+      arrowsShot: 3,
+      totalScore: 50,
+      averagePerArrow: 16.67,
+      averagePerEnd: 50,
+      bestEnd: 50,
+      worstEnd: 50,
+      consistency: 0,
+      xCount: 2,
+      mCount: 0,
+      innerCount: 2,
+      evolution: [{ seq: 1, total: 50, cumulative: 50 }],
+      distribution: { X: 2, '10': 1 },
+    };
+    const mk = (id: number, alias: string, total: number, cat: 'compuesto' | 'raso') => ({
+      id,
+      avatarId: id,
+      alias,
+      bowCategory: cat,
+      color: 'blue',
+      stake: null,
+      experience: 'senior' as const,
+      pairIndex: 0,
+      pairPosition: 'A' as const,
+      totalScore: total,
+      totalInner: 0,
+      totalSecond: 0,
+      totalX: 0,
+      totalM: 0,
+      endsCompleted: 1,
+    });
+    state.tournament = {
+      id: 1,
+      name: 'Copa',
+      modality: 'sala',
+      roundsCount: 1,
+      arrowsPerEnd: 3,
+      scoringSet: [],
+      stakeMap: null,
+      distances: null,
+      status: 'en_curso',
+      createdAt: 0,
+      finishedAt: null,
+      participants: [mk(1, 'Ana', 50, 'compuesto'), mk(2, 'Beto', 30, 'raso')],
+      rounds: [],
+      miniPodium: [],
+    };
+    renderPage();
+
+    expect(screen.getByText('Comparativas')).toBeInTheDocument();
+    expect(screen.getByText('#1 de 2')).toBeInTheDocument();
   });
 });

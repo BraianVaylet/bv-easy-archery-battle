@@ -62,7 +62,7 @@ Tareas pequeñas, priorizadas y autocontenidas para que modelos de IA (u otros d
 - [x] Exportar/compartir podio (imagen/print). _(Página Podio: botones **Compartir** (Web Share API → fallback portapapeles, `lib/share.ts`) e **Imprimir** (`window.print` + `@media print` que oculta el chrome y deja solo `.print-area`). Tests RTL de impresión y copia.)_
 - [x] Gráfico de evolución por tirada. _(`components/EvolutionChart.tsx`: line chart en SVG puro (sin dependencias), tema-aware, accesible (`role="img"` + `aria-label`); integrado en `ParticipantStats` sobre la lista. Tests del componente.)_
 - [x] Historial/gestión de avatares (editar, desarchivar). _(BE: `repo.listArchived`/`unarchive`, `service.listArchived`/`unarchive`, `GET /avatars?archived=true` + `POST /avatars/:id/restore` (CSRF + ownership). FE: `AvatarCreate` reusada para editar (`/avatars/:id/edit`), página `AvatarManage` (`/avatars`) para editar/archivar activos y restaurar archivados, acceso "Gestionar" desde Home. Tests API (restore, archivados, ownership) y RTL (archivar/restaurar).)_
-- [ ] Métricas avanzadas (consistencia, distribución por anillo, comparativas).
+- [x] Métricas avanzadas (consistencia, distribución por anillo, comparativas). _(shared: `participantStats` ahora incluye `consistency` (desvío σ de los totales) y `worstEnd`; nueva `participantComparison` (posición y promedio general/categoría). FE: `ParticipantStats` muestra tiles Peor end/Desvío σ y sección Comparativas (posición + delta vs promedios). Distribución por anillo ya existía. Tests shared (tdd) y RTL.)_
 - [ ] i18n.
 
 ---
