@@ -56,6 +56,47 @@ describe('avatars', () => {
     expect(list).toHaveLength(0);
   });
 
+  it('archivado: aparece en ?archived=true y restore lo reactiva', async () => {
+    const id = ((await (await create()).json()) as Avatar).id;
+    await jsonReq(app, `/api/avatars/${id}`, 'DELETE', null, jar);
+
+    // Aparece en el historial de archivados.
+    const archived = (await (
+      await app.request('/api/avatars?archived=true', { headers: { cookie: cookieHeader(jar) } })
+    ).json()) as Avatar[];
+    expect(archived).toHaveLength(1);
+    expect(archived[0]?.id).toBe(id);
+
+    // Restore lo devuelve a la lista activa.
+    const res = await jsonReq(app, `/api/avatars/${id}/restore`, 'POST', null, jar);
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as Avatar).id).toBe(id);
+
+    const active = (await (
+      await app.request('/api/avatars', { headers: { cookie: cookieHeader(jar) } })
+    ).json()) as Avatar[];
+    expect(active).toHaveLength(1);
+    const stillArchived = (await (
+      await app.request('/api/avatars?archived=true', { headers: { cookie: cookieHeader(jar) } })
+    ).json()) as Avatar[];
+    expect(stillArchived).toHaveLength(0);
+  });
+
+  it('restore de un avatar activo o inexistente da 404', async () => {
+    const id = ((await (await create()).json()) as Avatar).id;
+    // Activo (no archivado) → no hay nada que restaurar.
+    expect((await jsonReq(app, `/api/avatars/${id}/restore`, 'POST', null, jar)).status).toBe(404);
+    expect((await jsonReq(app, '/api/avatars/99999/restore', 'POST', null, jar)).status).toBe(404);
+  });
+
+  it('restore respeta ownership: otro usuario no puede restaurar (404)', async () => {
+    const id = ((await (await create()).json()) as Avatar).id;
+    await jsonReq(app, `/api/avatars/${id}`, 'DELETE', null, jar);
+    const jar2 = await registerUser(app, 'otro');
+    const res = await jsonReq(app, `/api/avatars/${id}/restore`, 'POST', null, jar2);
+    expect(res.status).toBe(404);
+  });
+
   it('rechaza mutación sin CSRF (403)', async () => {
     const res = await app.request('/api/avatars', {
       method: 'POST',

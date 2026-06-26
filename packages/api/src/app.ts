@@ -10,6 +10,8 @@ import { authRoutes } from './routes/auth';
 import { avatarRoutes } from './routes/avatars';
 import { catalogRoutes } from './routes/catalog';
 import { healthRoutes } from './routes/health';
+import { scoreRoutes } from './routes/scores';
+import { tournamentRoutes } from './routes/tournaments';
 import { createServices } from './services';
 import type { AppEnv } from './types';
 
@@ -52,7 +54,9 @@ export function createApp(db: DB) {
   const protectedApi = new Hono<AppEnv>();
   protectedApi.use('*', requireAuth(db));
   protectedApi.route('/avatars', avatarRoutes(services.avatar));
-  // torneos, tiradas, podios y stats se montan en BE-6+.
+  protectedApi.route('/tournaments', tournamentRoutes(services.tournament));
+  protectedApi.route('/tournaments', scoreRoutes(services.score));
+  // podios y stats se montan en BE-9+.
   api.route('/', protectedApi);
 
   app.route('/api', api);

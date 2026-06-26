@@ -65,6 +65,20 @@ describe('auth', () => {
     expect(jar.bv_csrf).toBeTruthy();
   });
 
+  it('la cookie CSRF es persistente (Max-Age) y sobrevive al reinicio del navegador', async () => {
+    const res = await register();
+    const csrf = res.headers.getSetCookie().find((sc) => sc.startsWith('bv_csrf='));
+    expect(csrf).toBeDefined();
+    expect(csrf).toMatch(/Max-Age=/i);
+  });
+
+  it('GET /auth/csrf emite una cookie CSRF (rehidratación del front)', async () => {
+    const res = await app.request('/api/auth/csrf');
+    expect(res.status).toBe(200);
+    const csrf = res.headers.getSetCookie().find((sc) => sc.startsWith('bv_csrf='));
+    expect(csrf).toMatch(/Max-Age=/i);
+  });
+
   it('rechaza alias duplicado (409)', async () => {
     await register();
     const res = await jsonReq(app, '/api/auth/register', 'POST', REGISTER);

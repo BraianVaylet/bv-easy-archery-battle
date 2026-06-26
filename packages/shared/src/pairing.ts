@@ -1,7 +1,8 @@
 /**
  * Pareo de arqueros (puro). Arma pares (2 por blanco) intentando emparejar
- * dentro de la misma estaca; el sobrante de cada estaca se combina al final, y
- * un único sobrante total forma un trío con el último par. Determinista.
+ * dentro de la misma estaca; el sobrante de cada estaca se combina al final.
+ * Nunca hay tríos: si el total es impar, el último arquero tira solo.
+ * Determinista.
  */
 
 import {
@@ -51,12 +52,7 @@ export function buildPairs<T extends Pairable>(participants: readonly T[]): Pair
     if (i + 1 < leftovers.length) {
       pairs.push([leftovers[i] as T, leftovers[i + 1] as T]);
     } else {
-      const last = pairs[pairs.length - 1];
-      if (last) {
-        last.push(leftovers[i] as T); // trío
-      } else {
-        pairs.push([leftovers[i] as T]); // único participante
-      }
+      pairs.push([leftovers[i] as T]); // impar → arquero solo (nunca trío)
     }
   }
 
@@ -66,5 +62,50 @@ export function buildPairs<T extends Pairable>(participants: readonly T[]): Pair
       out.push({ item, pairIndex, position: PAIR_POSITIONS[j] as PairPosition });
     });
   });
+  return out;
+}
+
+/** Estado de un par existente para el pareo incremental. */
+export interface ExistingPairSlot {
+  pairIndex: number;
+  /** Estaca del par (la de sus miembros). */
+  stake: Stake | null;
+  /** Miembros actuales (1 = incompleto, se puede completar). */
+  count: number;
+}
+
+/**
+ * Pareo incremental al agregar arqueros a un torneo en curso: NO toca los pares
+ * existentes. Primero completa pares incompletos (1 miembro) con un recién
+ * llegado de la MISMA estaca; el resto forma pares nuevos con índices nuevos.
+ * Determinista.
+ */
+export function assignNewParticipants<T extends Pairable>(
+  existingPairs: readonly ExistingPairSlot[],
+  newcomers: readonly T[],
+): Paired<T>[] {
+  const incomplete = existingPairs
+    .filter((p) => p.count === 1)
+    .sort((a, b) => a.pairIndex - b.pairIndex);
+  const maxIndex = existingPairs.reduce((m, p) => Math.max(m, p.pairIndex), -1);
+
+  const sorted = sortGroup(newcomers);
+  const used = new Set<T>();
+  const out: Paired<T>[] = [];
+
+  // 1) Completar pares incompletos con un recién llegado de la misma estaca.
+  for (const slot of incomplete) {
+    const fill = sorted.find((n) => !used.has(n) && n.stake === slot.stake);
+    if (fill) {
+      used.add(fill);
+      out.push({ item: fill, pairIndex: slot.pairIndex, position: 'B' });
+    }
+  }
+
+  // 2) Los restantes forman pares nuevos (reusa buildPairs) con índices nuevos.
+  const remaining = sorted.filter((n) => !used.has(n));
+  for (const p of buildPairs(remaining)) {
+    out.push({ item: p.item, pairIndex: maxIndex + 1 + p.pairIndex, position: p.position });
+  }
   return out;
 }

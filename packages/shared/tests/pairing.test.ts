@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type BowCategory, type Stake, buildPairs } from '../src/index';
+import { type BowCategory, type Stake, assignNewParticipants, buildPairs } from '../src/index';
 
 const p = (alias: string, stake: Stake | null, bowCategory: BowCategory = 'compuesto') => ({
   alias,
@@ -44,7 +44,7 @@ describe('buildPairs', () => {
     ]);
   });
 
-  it('total impar en una estaca → trío en el último par', () => {
+  it('total impar → el último arquero tira solo (nunca trío)', () => {
     const out = buildPairs([
       p('a', 'roja'),
       p('b', 'roja'),
@@ -53,9 +53,10 @@ describe('buildPairs', () => {
       p('e', 'roja'),
     ]);
     const pairs = pairsOf(out);
-    expect(pairs).toHaveLength(2);
-    expect(pairs[1]).toHaveLength(3); // trío
-    expect(out.some((o) => o.position === 'C')).toBe(true);
+    expect(pairs).toHaveLength(3); // 2 pares + 1 solo
+    expect(pairs[2]).toHaveLength(1); // arquero solo
+    expect(out.every((o) => o.position === 'A' || o.position === 'B')).toBe(true);
+    expect(out.some((o) => o.position === 'C')).toBe(false);
   });
 
   it('sobrantes de distintas estacas se combinan', () => {
@@ -70,5 +71,38 @@ describe('buildPairs', () => {
   it('es determinista', () => {
     const input = [p('b', null), p('a', null), p('c', null)];
     expect(buildPairs(input)).toEqual(buildPairs(input));
+  });
+});
+
+describe('assignNewParticipants (incremental)', () => {
+  it('completa un par incompleto (mismo nulo) sin tocar los existentes', () => {
+    // Par 0 completo, par 1 incompleto (solo).
+    const existing = [
+      { pairIndex: 0, stake: null, count: 2 },
+      { pairIndex: 1, stake: null, count: 1 },
+    ];
+    const out = assignNewParticipants(existing, [p('nuevo', null)]);
+    expect(out).toEqual([{ item: p('nuevo', null), pairIndex: 1, position: 'B' }]);
+  });
+
+  it('solo completa incompletos de la misma estaca; el resto va a pares nuevos', () => {
+    // Par 0 (roja) incompleto, par 1 (azul) incompleto.
+    const existing = [
+      { pairIndex: 0, stake: 'roja' as Stake, count: 1 },
+      { pairIndex: 1, stake: 'azul' as Stake, count: 1 },
+    ];
+    const out = assignNewParticipants(existing, [p('r', 'roja'), p('a1', 'azul'), p('a2', 'azul')]);
+    const byAlias = new Map(out.map((o) => [o.item.alias, o]));
+    // r completa el par roja (0/B); a1 completa el azul (1/B); a2 va a un par nuevo (índice 2).
+    expect(byAlias.get('r')).toMatchObject({ pairIndex: 0, position: 'B' });
+    expect(byAlias.get('a1')).toMatchObject({ pairIndex: 1, position: 'B' });
+    expect(byAlias.get('a2')).toMatchObject({ pairIndex: 2, position: 'A' });
+  });
+
+  it('si no hay incompletos compatibles, forma pares nuevos al final', () => {
+    const existing = [{ pairIndex: 0, stake: null, count: 2 }];
+    const out = assignNewParticipants(existing, [p('x', null), p('y', null)]);
+    expect(out.every((o) => o.pairIndex === 1)).toBe(true);
+    expect(out.map((o) => o.position).sort()).toEqual(['A', 'B']);
   });
 });

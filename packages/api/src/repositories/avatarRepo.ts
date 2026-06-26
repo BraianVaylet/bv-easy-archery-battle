@@ -44,13 +44,22 @@ export function createAvatarRepo(db: DB) {
     `UPDATE avatars SET alias = ?, bow_category = ?, color = ?, experience = ?, updated_at = ?
      WHERE id = ? AND user_id = ?`,
   );
+  const listArchived = db.prepare<[number], AvatarRow>(
+    'SELECT * FROM avatars WHERE user_id = ? AND archived_at IS NOT NULL ORDER BY updated_at DESC',
+  );
   const archiveStmt = db.prepare(
     'UPDATE avatars SET archived_at = ? WHERE id = ? AND user_id = ? AND archived_at IS NULL',
+  );
+  const unarchiveStmt = db.prepare(
+    'UPDATE avatars SET archived_at = NULL, updated_at = ? WHERE id = ? AND user_id = ? AND archived_at IS NOT NULL',
   );
 
   return {
     list(userId: number): Avatar[] {
       return list.all(userId).map(toAvatar);
+    },
+    listArchived(userId: number): Avatar[] {
+      return listArchived.all(userId).map(toAvatar);
     },
     findOwned(userId: number, id: number): Avatar | undefined {
       const r = findOwned.get(id, userId);
@@ -86,6 +95,9 @@ export function createAvatarRepo(db: DB) {
     },
     archive(userId: number, id: number): boolean {
       return archiveStmt.run(now(), id, userId).changes > 0;
+    },
+    unarchive(userId: number, id: number): boolean {
+      return unarchiveStmt.run(now(), id, userId).changes > 0;
     },
   };
 }

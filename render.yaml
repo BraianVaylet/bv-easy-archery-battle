@@ -1,0 +1,30 @@
+# Render — BV Archery Battle (Web Service Docker + disco persistente para SQLite).
+# Los discos persistentes requieren un plan de pago (el plan free no los soporta).
+# Deploy: conectar el repo en Render; este blueprint crea el servicio y el disco.
+
+services:
+  - type: web
+    name: bv-archery-battle
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter        # 'starter' o superior: requerido para discos persistentes.
+    region: oregon       # ajustar a la región preferida.
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8787"
+      - key: DATABASE_PATH
+        value: /data/app.db
+      - key: WEB_DIST
+        value: public
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: SESSION_SECRET
+        generateValue: true   # Render genera un secreto seguro y lo inyecta.
+    disk:
+      name: bv-data
+      mountPath: /data
+      sizeGB: 1

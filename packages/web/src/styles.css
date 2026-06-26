@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+/* ── Tokens semánticos (claro) ─────────────────────────────────────────────
+   Ver docs/DESIGN_SYSTEM.md §1. Los `--primary*` los sobrescribe el acento
+   (script anti-FOUC en index.html + ThemeProvider). */
+/* Paleta cálida estilo Claude (cream/ink). El acento lo sobrescribe el script
+   anti-FOUC + ThemeProvider; el resto son neutros cálidos. */
+:root {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --surface-2: #f0eee6;
+  --border: #e4e1d7;
+  --fg: #1a1915;
+  --muted: #6b6862;
+  --dim: #9c998f;
+  --primary: #c96442;
+  --primary-strong: #b4543a;
+  --primary-soft: rgba(201, 100, 66, 0.14);
+  --on-primary: #ffffff;
+  --danger: #c0584e;
+  --ok: #4f8a5b;
+  /* Puntillismo de fondo: apenas más oscuro que el bg. */
+  --dot: rgba(60, 52, 36, 0.05);
+}
+
+[data-theme="dark"] {
+  --bg: #1f1e1d;
+  --surface: #292827;
+  --surface-2: #35332f;
+  --border: #3d3a35;
+  --fg: #f4f2ec;
+  --muted: #aca899;
+  --dim: #6e6b62;
+  --danger: #e0796d;
+  --ok: #7fb389;
+  --dot: rgba(0, 0, 0, 0.22);
+}
+
+/* ── Mapeo de tokens a utilidades Tailwind (bg-surface, text-muted, …) ────── */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-on-primary: var(--on-primary);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--fg);
+  font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Fondo + puntillismo sutil (un punto cada 18px). */
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.2px);
+  background-size: 18px 18px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ── Impresión: solo el contenido marcado; sin chrome de la app ───────────── */
+@media print {
+  /* Oculta header de la app y cualquier elemento no imprimible. */
+  header,
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+  /* Sin recortes ni sticky al imprimir; deja fluir el contenido. */
+  main {
+    padding: 0 !important;
+  }
+  .print-area {
+    max-width: none;
+  }
+  /* Evita cortar una tarjeta/podio a mitad de página. */
+  .print-area .break-avoid {
+    break-inside: avoid;
+  }
+}

@@ -1,6 +1,6 @@
 import type { Context } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
-import { cookieSecure } from '../env';
+import { cookieSecure, env } from '../env';
 import { randomToken, safeEqual } from './tokens';
 
 export const CSRF_COOKIE = 'bv_csrf';
@@ -14,6 +14,9 @@ export function issueCsrfToken(c: Context): string {
     secure: cookieSecure,
     sameSite: 'Strict',
     path: '/',
+    // Persistente como la sesión: si fuera cookie de sesión, al reabrir el
+    // navegador la sesión sobrevive pero el CSRF no, y la 1ª mutación daría 403.
+    maxAge: env.SESSION_TTL_DAYS * 24 * 60 * 60,
   });
   return token;
 }

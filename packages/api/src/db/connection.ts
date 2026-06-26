@@ -3,6 +3,7 @@ import { dirname } from 'node:path';
 import Database from 'better-sqlite3';
 import { env } from '../env';
 import { seedCatalog } from './catalog';
+import { runFixups } from './migrations';
 import { SCHEMA_SQL } from './schema';
 
 export type DB = Database.Database;
@@ -17,6 +18,7 @@ export function createDb(path: string = env.DATABASE_PATH): DB {
   db.pragma('foreign_keys = ON');
   db.pragma('busy_timeout = 5000');
   db.exec(SCHEMA_SQL);
+  runFixups(db);
   db.transaction(() => seedCatalog(db))();
   return db;
 }

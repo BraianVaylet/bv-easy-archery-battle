@@ -1,0 +1,34 @@
+# Crítico: no copiar node_modules del host (clobbearía el binario nativo de
+# better-sqlite3 compilado dentro de la imagen para la arquitectura correcta).
+node_modules
+**/node_modules
+
+# Builds y datos locales
+**/dist
+data
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Secretos y env locales
+.env
+.env.*
+!.env.example
+
+# Tests/artefactos que no van al runtime
+coverage
+playwright-report
+test-results
+**/tests
+**/*.test.ts
+
+# Git y CI
+.git
+.github
+.gitignore
+
+# Misc
+*.log
+.DS_Store
+.vscode
+.idea
