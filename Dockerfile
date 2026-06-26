@@ -34,6 +34,11 @@ ENV NODE_ENV=production \
     DATABASE_PATH=/data/app.db \
     WEB_DIST=public
 
+# gosu para corregir permisos del volumen montado y luego bajar privilegios a node.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/*
+
 # node_modules ya traen el binario nativo de better-sqlite3 compilado para esta base.
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages ./packages
@@ -44,7 +49,12 @@ RUN cp -r packages/web/dist packages/api/public \
     && mkdir -p /data \
     && chown -R node:node /data /app
 
-USER node
+# Entrypoint: asegura que /data (volumen montado, a veces root) sea escribible
+# por node y arranca como node. printf para evitar problemas de CRLF en Windows.
+RUN printf '#!/bin/sh\nset -e\nmkdir -p /data\nchown -R node:node /data || true\nexec gosu node "$@"\n' \
+    > /usr/local/bin/docker-entrypoint.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
+
 WORKDIR /app/packages/api
 VOLUME /data
 EXPOSE 8787
@@ -53,4 +63,5 @@ EXPOSE 8787
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||8787)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["pnpm", "start"]

@@ -94,8 +94,22 @@ Objetivo: **un contenedor + volumen persistente** (SQLite necesita disco; server
 - Web Service (Docker) + **Persistent Disk** montado en `/data`.
 - Variables de entorno equivalentes.
 
-### Railway
-- Servicio Docker + volumen. Variables equivalentes.
+### Railway (`railway.json`)
+
+Despliega el `Dockerfile` tal cual. Pasos:
+
+1. **Crear proyecto** → *New Project* → *Deploy from GitHub repo* (o `railway up` con la CLI). Railway detecta `railway.json` y construye con el `Dockerfile`.
+2. **Volumen** (persistencia de SQLite): en el servicio → *Variables/Settings* → *Volumes* → *New Volume*, mount path **`/data`**. Sin esto, los datos se pierden en cada deploy.
+3. **Variables** (Settings → Variables):
+   - `NODE_ENV=production`
+   - `DATABASE_PATH=/data/app.db`
+   - `COOKIE_SECURE=true`
+   - `SESSION_SECRET=<openssl rand -hex 32>` (obligatorio, ≥16 chars)
+   - `WEB_DIST=public` (opcional; ya es el default)
+   - **No** setees `PORT`: Railway lo inyecta y la API escucha en `process.env.PORT`.
+4. **Dominio**: Settings → Networking → *Generate Domain* (HTTPS gestionado por Railway). El healthcheck (`/api/health`) y el dominio quedan listos.
+
+> El `Dockerfile` corre como usuario `node` pero el entrypoint hace `chown` de `/data` al arrancar, así el volumen (montado como root) queda escribible. Mismo binario sirve `/api` + frontend en el puerto de Railway.
 
 > En cualquiera: HTTPS obligatorio, `COOKIE_SECURE=true`, HSTS, healthcheck a `/api/health`, backup periódico del archivo SQLite (copiar el `.db` del volumen).
 
