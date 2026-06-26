@@ -1,6 +1,6 @@
 # Historial de Prompts
 
-## Primer Prompt
+## 1. Primer Prompt
 
 Debes desarrollar una aplicación web app para la organización y gestion de torneos de arquería.
 
@@ -140,3 +140,30 @@ Si tienes preguntas sobre los requerimientos, sobre la app, sobre las funcionali
 
 Puedes dar inicio al desarrollo del plan.
 
+--------------------------------------------------------------------------
+
+## 2. Primer Prompt para el cambio de UI
+
+Actualización de la UI.
+
+1. se debe mejorar el diseño general de la UI, hay un archivo DESIGN_GUIDE para implementar un diseño mas moderno similar al que usa actualmente Claude.
+
+2. cambios puntuales de la UI:
+- El botón para cambiar de tema (light/dark) debe cambiar de un emoji a un icono. (utilizar un plantilla de iconos para la aplicación)
+- El cerrar session debe ser un icono en el header.
+- El botón "Nuevo Avatar" en la Home debe cambiar por Avatares, dentro se debe mostrar el listado de "Mis avatares" y el botón de "Nuevo Avatar". No se debe mostrar el listado de avatares en la Home. Seria la pagina Gestionar.
+- La app debe tener un color de acento y debe poder cambiarse desde el header (como lo hace bv-coss y bv-bow-sight).
+- Crea iconografía para cada categoría de arco, (Ejemplo: Una polea para los compuestos, una mira de 3 pines para cazador, una flecha para los rasos, el símbolo de las olimpiadas para los olímpicos, un arco recurvo para los tradicionaes, y un arco largo para los longbow. (La idea es que cada Avatar tenga una imagen, la imagen sera el icono de la categoría seleccionada con el fondo del color seleccionado, ej: si selecciono Categoria Compuesto y color Rojo, el icono de ese avatar sera una polea blanca en un fondo rojo).
+
+## 3. Prompt para Torneos
+
+Cambios de UI y funcional de los Torneos:
+
+- Permite editar un torneo en curso.
+- Puedes agregar participantes, los participantes deberán realizar las tiradas que ya fueron completadas por los participantes anteriores.
+- No puede existir pares de mas de 2, si es un numero impar uno de los arqueros tira solo.
+- Al terminar la ultima tirada debe dar la posibilidad de agregar una nueva tirada (para el caso de querer continuar el torneo con mas blancos) o finalizarlo.
+- La sección de podios debe aparecer luego de completar la primera tirada, el podio debe mostrar los primeros 3 pero debe poder ampliarlo para ver todos. Tambien debe poder por medio de un carousel ver los otros podios (general, por categoría y escuela)
+- Cuando un tirada ya tiene datos cargados y se vuelve a la pagina del torneo debe mostrar la etiqueta de en proceso.
+- Cuando se cambia el numero de tiradas o flechas si se limpia el campo se autosetea en 0, eso puede ser molesto, deja que quede vacío y que muestre un error cuando se intenta crear un torneo sin completarlos.
+- En la pagina de tirada mostrar al lado de cada texto "Par X" agregar las categorías de cada participante (Ej Par 1 - Compuesto | Cazador)

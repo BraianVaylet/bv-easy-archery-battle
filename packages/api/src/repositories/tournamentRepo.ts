@@ -1,5 +1,6 @@
 import type {
   BowCategory,
+  ExistingPairSlot,
   Experience,
   Modality,
   PairPosition,
@@ -42,9 +43,10 @@ export interface PairingInput {
   stake: Stake | null;
 }
 
-/** Recalcula el pareo sobre el conjunto completo de participantes. */
-export type RepairFn = (
-  parts: PairingInput[],
+/** Asigna pareo SOLO a los recién llegados (no toca los existentes). */
+export type AssignFn = (
+  existingPairs: ExistingPairSlot[],
+  newcomers: PairingInput[],
 ) => Map<number, { pairIndex: number; pairPosition: PairPosition }>;
 
 /** Datos para estadísticas de un participante (o motivo de fallo). */
@@ -199,9 +201,9 @@ export function createTournamentRepo(db: DB) {
   );
   const allForPairing = db.prepare<
     [number],
-    { id: number; alias: string; bow_category: string; stake: string | null }
+    { id: number; alias: string; bow_category: string; stake: string | null; pair_index: number }
   >(
-    'SELECT id, alias, bow_category, stake FROM tournament_participants WHERE tournament_id = ? ORDER BY id',
+    'SELECT id, alias, bow_category, stake, pair_index FROM tournament_participants WHERE tournament_id = ? ORDER BY id',
   );
   const updatePairing = db.prepare(
     'UPDATE tournament_participants SET pair_index = ?, pair_position = ? WHERE id = ?',
@@ -238,13 +240,28 @@ export function createTournamentRepo(db: DB) {
   });
 
   const addParticipantsTx = db.transaction(
-    (userId: number, id: number, seeds: ParticipantSeed[], repair: RepairFn): MutateResult => {
+    (userId: number, id: number, seeds: ParticipantSeed[], assign: AssignFn): MutateResult => {
       const t = findStatus.get(id, userId);
       if (!t) return 'not_found';
       if (t.status !== 'en_curso') return 'not_open';
       const ts = now();
-      for (const p of seeds) {
-        insertParticipant.run(
+
+      // Pares existentes ANTES de insertar (para detectar incompletos por estaca).
+      const slots = new Map<number, { count: number; stake: string | null }>();
+      for (const r of allForPairing.all(id)) {
+        const cur = slots.get(r.pair_index) ?? { count: 0, stake: r.stake };
+        cur.count += 1;
+        slots.set(r.pair_index, cur);
+      }
+      const existingPairs: ExistingPairSlot[] = [...slots].map(([pairIndex, v]) => ({
+        pairIndex,
+        count: v.count,
+        stake: v.stake as Stake | null,
+      }));
+
+      // Inserta los nuevos (pareo provisorio) y captura sus ids.
+      const newcomers: PairingInput[] = seeds.map((p) => {
+        const info = insertParticipant.run(
           id,
           p.avatarId,
           p.alias,
@@ -256,16 +273,17 @@ export function createTournamentRepo(db: DB) {
           p.pairPosition,
           ts,
         );
-      }
-      // Re-parea sobre el conjunto completo y reabre las tiradas ya completas
-      // (los nuevos arqueros deben cargarlas).
-      const parts: PairingInput[] = allForPairing.all(id).map((r) => ({
-        id: r.id,
-        alias: r.alias,
-        bowCategory: r.bow_category as BowCategory,
-        stake: r.stake as Stake | null,
-      }));
-      for (const [pid, a] of repair(parts)) {
+        return {
+          id: Number(info.lastInsertRowid),
+          alias: p.alias,
+          bowCategory: p.bowCategory,
+          stake: p.stake,
+        };
+      });
+
+      // Asigna pareo SOLO a los nuevos (completa incompletos / arma pares nuevos)
+      // y reabre las tiradas ya completas (los nuevos deben cargarlas).
+      for (const [pid, a] of assign(existingPairs, newcomers)) {
         updatePairing.run(a.pairIndex, a.pairPosition, pid);
       }
       reopenCompletedRounds.run(id);
@@ -342,9 +360,9 @@ export function createTournamentRepo(db: DB) {
       userId: number,
       id: number,
       seeds: ParticipantSeed[],
-      repair: RepairFn,
+      assign: AssignFn,
     ): MutateResult {
-      return addParticipantsTx(userId, id, seeds, repair);
+      return addParticipantsTx(userId, id, seeds, assign);
     },
     getParticipants(userId: number, id: number): TournamentParticipant[] | undefined {
       if (!findStatus.get(id, userId)) return undefined;

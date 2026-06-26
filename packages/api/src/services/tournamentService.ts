@@ -19,6 +19,7 @@ import {
   type TournamentStats,
   type TournamentStatus,
   type TournamentUpdateInput,
+  assignNewParticipants,
   buildPairs,
   participantStats,
   rankItems,
@@ -29,10 +30,9 @@ import {
 import { conflict, notFound } from '../lib/errors';
 import type { AvatarRepo } from '../repositories/avatarRepo';
 import type {
+  AssignFn,
   MutateResult,
-  PairingInput,
   ParticipantSeed,
-  RepairFn,
   TournamentRepo,
 } from '../repositories/tournamentRepo';
 
@@ -166,16 +166,17 @@ export function createTournamentService(repo: TournamentRepo, avatarRepo: Avatar
         };
       });
 
-      // Re-parea sobre todos (existentes + nuevos), determinista.
-      const repair: RepairFn = (parts: PairingInput[]) => {
+      // Pareo incremental: completa pares incompletos (misma estaca) y arma
+      // pares nuevos sólo con los recién llegados. No toca los existentes.
+      const assign: AssignFn = (existingPairs, newcomers) => {
         const out = new Map<number, { pairIndex: number; pairPosition: 'A' | 'B' | 'C' }>();
-        for (const { item, pairIndex, position } of buildPairs(parts)) {
+        for (const { item, pairIndex, position } of assignNewParticipants(existingPairs, newcomers)) {
           out.set(item.id, { pairIndex, pairPosition: position });
         }
         return out;
       };
 
-      ensureMutated(repo.addParticipants(userId, id, seeds, repair));
+      ensureMutated(repo.addParticipants(userId, id, seeds, assign));
       return detailView(repo, userId, id);
     },
 

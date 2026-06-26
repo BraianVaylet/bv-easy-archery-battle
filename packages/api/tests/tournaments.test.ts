@@ -381,6 +381,36 @@ describe('tournaments — editar en curso (agregar participantes/tirada)', () =>
     expect(beto?.endsCompleted).toBe(0);
   });
 
+  it('el nuevo completa el par incompleto existente (no re-parea)', async () => {
+    const { id, pid } = await seed(); // Ana: par 0, solo (posición A)
+    const b = await makeAvatar(app, jar, 'Beto', 'cazador');
+    const t = (await (
+      await jsonReq(app, `/api/tournaments/${id}/participants`, 'POST', { avatarIds: [b] }, jar)
+    ).json()) as TournamentDetailView;
+
+    const ana = t.participants.find((p) => p.id === pid);
+    const beto = t.participants.find((p) => p.alias === 'Beto');
+    // Beto completa el par de Ana (mismo pairIndex, posición B); Ana no cambia.
+    expect(ana?.pairIndex).toBe(0);
+    expect(ana?.pairPosition).toBe('A');
+    expect(beto?.pairIndex).toBe(0);
+    expect(beto?.pairPosition).toBe('B');
+  });
+
+  it('un tercero arranca un par nuevo (índice nuevo)', async () => {
+    const { id } = await seed();
+    const b = await makeAvatar(app, jar, 'Beto', 'cazador');
+    const c = await makeAvatar(app, jar, 'Caro', 'raso');
+    await jsonReq(app, `/api/tournaments/${id}/participants`, 'POST', { avatarIds: [b] }, jar);
+    const t = (await (
+      await jsonReq(app, `/api/tournaments/${id}/participants`, 'POST', { avatarIds: [c] }, jar)
+    ).json()) as TournamentDetailView;
+
+    const caro = t.participants.find((p) => p.alias === 'Caro');
+    expect(caro?.pairIndex).toBe(1); // par nuevo, no toca el 0
+    expect(caro?.pairPosition).toBe('A');
+  });
+
   it('rechaza agregar un avatar que ya participa (409)', async () => {
     const a = await makeAvatar(app, jar, 'Ana', 'compuesto');
     const res = await createTournament(app, jar, {
