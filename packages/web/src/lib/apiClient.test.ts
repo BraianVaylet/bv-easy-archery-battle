@@ -41,6 +41,29 @@ describe('apiClient', () => {
     expect(out).toEqual({ id: 1 });
   });
 
+  it('si falta la cookie CSRF, la pide a /auth/csrf y reintenta con el header', async () => {
+    // Limpia la cookie sembrada en beforeEach.
+    document.cookie = 'bv_csrf=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    expect(document.cookie).not.toContain('bv_csrf');
+
+    const fetchFn = vi.fn().mockImplementation((url: string) => {
+      if (url === '/api/auth/csrf') {
+        document.cookie = 'bv_csrf=minted456';
+        return Promise.resolve({ ok: true, status: 200, json: async () => ({ csrfToken: 'x' }) });
+      }
+      return Promise.resolve({ ok: true, status: 201, json: async () => ({ id: 9 }) });
+    });
+    vi.stubGlobal('fetch', fetchFn);
+
+    const out = await api.post<{ id: number }>('/foo', { a: 1 });
+
+    expect(fetchFn.mock.calls[0]?.[0]).toBe('/api/auth/csrf');
+    const postInit = fetchFn.mock.calls[1]?.[1];
+    expect(postInit.method).toBe('POST');
+    expect(postInit.headers['x-csrf-token']).toBe('minted456');
+    expect(out).toEqual({ id: 9 });
+  });
+
   it('204 devuelve undefined', async () => {
     mockFetch({ status: 204 });
     expect(await api.del('/foo')).toBeUndefined();

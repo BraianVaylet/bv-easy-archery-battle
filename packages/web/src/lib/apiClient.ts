@@ -30,13 +30,29 @@ interface RequestOptions {
   body?: unknown;
 }
 
+/**
+ * Garantiza un token CSRF antes de una mutación. La cookie puede faltar aunque
+ * la sesión siga viva (p. ej. se reabrió el navegador): en ese caso la pedimos
+ * a `/auth/csrf`, que la emite, y la leemos. Evita el 403 "Token CSRF inválido".
+ */
+async function ensureCsrf(): Promise<string | undefined> {
+  const existing = readCookie(CSRF_COOKIE);
+  if (existing) return existing;
+  try {
+    await fetch(`${BASE}/auth/csrf`, { credentials: 'include' });
+  } catch {
+    // Sin red: la mutación fallará igual con NETWORK más abajo.
+  }
+  return readCookie(CSRF_COOKIE);
+}
+
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const method = opts.method ?? 'GET';
   const headers: Record<string, string> = {};
   const hasBody = opts.body !== undefined;
   if (hasBody) headers['content-type'] = 'application/json';
   if (method !== 'GET') {
-    const csrf = readCookie(CSRF_COOKIE);
+    const csrf = await ensureCsrf();
     if (csrf) headers[CSRF_HEADER] = csrf;
   }
 
