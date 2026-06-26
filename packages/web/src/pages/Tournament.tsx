@@ -229,7 +229,7 @@ function AddParticipants({
     <Card className="mb-6 flex flex-col gap-3">
       <h2 className="font-semibold text-fg">Agregar participantes</h2>
       {available.length === 0 ? (
-        <p className="text-muted text-sm">No hay avatares disponibles para agregar.</p>
+        <p className="text-muted text-sm">No hay arqueros disponibles para agregar.</p>
       ) : (
         <div
           className={cn(

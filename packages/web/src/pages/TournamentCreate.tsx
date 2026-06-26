@@ -140,7 +140,7 @@ export function TournamentCreate() {
         <div>
           <Label>Participantes</Label>
           {avatars.length === 0 ? (
-            <p className="text-muted text-sm">No tenés avatares. Creá uno con el botón de abajo.</p>
+            <p className="text-muted text-sm">No tenés arqueros. Creá uno con el botón de abajo.</p>
           ) : (
             <div
               className={cn(
@@ -222,7 +222,7 @@ function InlineAvatarCreate({ onCreated }: { onCreated: (a: Avatar) => void }) {
   if (!open) {
     return (
       <Button type="button" variant="secondary" onClick={() => setOpen(true)}>
-        <Plus size={16} aria-hidden /> Crear avatar
+        <Plus size={16} aria-hidden /> Crear arquero
       </Button>
     );
   }
@@ -249,7 +249,7 @@ function InlineAvatarCreate({ onCreated }: { onCreated: (a: Avatar) => void }) {
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border border-dashed p-4">
       <div>
-        <Label htmlFor="inline-alias">Alias del avatar</Label>
+        <Label htmlFor="inline-alias">Alias del arquero</Label>
         <Input id="inline-alias" value={alias} onChange={(e) => setAlias(e.target.value)} />
       </div>
       <div className="grid grid-cols-2 gap-2">

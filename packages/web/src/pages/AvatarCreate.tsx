@@ -60,7 +60,7 @@ export function AvatarCreate() {
   };
 
   return (
-    <AppShell title={editing ? 'Editar avatar' : 'Nuevo avatar'} showBack>
+    <AppShell title={editing ? 'Editar arquero' : 'Nuevo arquero'} showBack>
       <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
         <div className="flex items-center gap-3">
           {bowCategory && color ? (
@@ -75,8 +75,8 @@ export function AvatarCreate() {
           )}
           <p className="text-muted text-sm">
             {bowCategory && color
-              ? 'Vista previa del avatar'
-              : 'Elegí categoría y color para ver el avatar'}
+              ? 'Vista previa del arquero'
+              : 'Elegí categoría y color para ver el arquero'}
           </p>
         </div>
 
@@ -154,7 +154,7 @@ export function AvatarCreate() {
 
         <Button type="submit" size="lg" loading={mutation.isPending}>
           {editing ? <Check size={18} aria-hidden /> : <Plus size={18} aria-hidden />}
-          {editing ? 'Guardar cambios' : 'Crear avatar'}
+          {editing ? 'Guardar cambios' : 'Crear arquero'}
         </Button>
       </form>
     </AppShell>

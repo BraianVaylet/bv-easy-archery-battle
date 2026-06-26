@@ -43,7 +43,7 @@ export function Home() {
         </Link>
         <Link to="/avatars">
           <Button className="w-full" variant="secondary">
-            <Users size={18} aria-hidden /> Avatares
+            <Users size={18} aria-hidden /> Arqueros
           </Button>
         </Link>
       </div>

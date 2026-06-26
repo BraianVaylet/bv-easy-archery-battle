@@ -28,8 +28,22 @@ export const tournamentCreateSchema = z
   .object({
     name,
     modality: z.enum(MODALITIES),
-    roundsCount: z.number().int().min(LIMITS.rounds.min).max(LIMITS.rounds.max),
-    arrowsPerEnd: z.number().int().min(LIMITS.arrowsPerEnd.min).max(LIMITS.arrowsPerEnd.max),
+    roundsCount: z
+      .number({
+        required_error: 'Ingresá la cantidad de tiradas.',
+        invalid_type_error: 'Ingresá la cantidad de tiradas.',
+      })
+      .int('Debe ser un número entero.')
+      .min(LIMITS.rounds.min, `Mínimo ${LIMITS.rounds.min} tirada.`)
+      .max(LIMITS.rounds.max, `Máximo ${LIMITS.rounds.max} tiradas.`),
+    arrowsPerEnd: z
+      .number({
+        required_error: 'Ingresá la cantidad de flechas.',
+        invalid_type_error: 'Ingresá la cantidad de flechas.',
+      })
+      .int('Debe ser un número entero.')
+      .min(LIMITS.arrowsPerEnd.min, `Mínimo ${LIMITS.arrowsPerEnd.min} flecha.`)
+      .max(LIMITS.arrowsPerEnd.max, `Máximo ${LIMITS.arrowsPerEnd.max} flechas.`),
     stakeMap: stakeMap.optional(),
     distances: distances.optional(),
     avatarIds: z

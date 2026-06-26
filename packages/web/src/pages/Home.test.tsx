@@ -54,7 +54,7 @@ describe('Home (FE-5)', () => {
       'href',
       '/tournaments/new',
     );
-    expect(screen.getByRole('link', { name: 'Avatares' })).toHaveAttribute('href', '/avatars');
+    expect(screen.getByRole('link', { name: 'Arqueros' })).toHaveAttribute('href', '/avatars');
     expect(screen.getByText('No hay torneos en curso')).toBeInTheDocument();
   });
 
