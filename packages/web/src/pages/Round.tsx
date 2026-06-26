@@ -7,17 +7,20 @@ import {
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AppShell } from '../components/AppShell';
+import { RoundStepper } from '../components/RoundStepper';
 import { EndRow } from '../components/score/EndRow';
 import { PairCard } from '../components/score/PairCard';
 import { ScoreKeypad } from '../components/score/ScoreKeypad';
 import { Button, Spinner } from '../components/ui';
 import { useRound, useSaveScore } from '../tournaments/useRound';
+import { useTournament } from '../tournaments/useTournaments';
 
 export function Round() {
   const { id, seq } = useParams();
   const tid = Number(id);
   const s = Number(seq);
   const { round, isLoading, isError } = useRound(tid, s);
+  const { tournament } = useTournament(tid);
   const save = useSaveScore(tid, s);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [draft, setDraft] = useState<string[]>([]);
@@ -74,6 +77,8 @@ export function Round() {
 
   return (
     <AppShell title={`Tirada ${s}`} showBack>
+      {tournament && <RoundStepper tid={tid} rounds={tournament.rounds} current={s} />}
+
       <p className="mb-4 text-muted text-sm">
         {round.status === 'completa' ? 'Tirada completa' : 'Cargá los puntajes de cada arquero.'}
       </p>

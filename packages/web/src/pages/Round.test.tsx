@@ -12,6 +12,19 @@ vi.mock('../tournaments/useRound', () => ({
   useRound: () => ({ round: state.round, isLoading: false, isError: false }),
   useSaveScore: () => ({ mutate: saveMutate, isPending: false, error: null }),
 }));
+vi.mock('../tournaments/useTournaments', () => ({
+  useTournament: () => ({
+    tournament: {
+      rounds: [
+        { id: 1, seq: 1, arrowsPerEnd: 3, status: 'pendiente', completedAt: null },
+        { id: 2, seq: 2, arrowsPerEnd: 3, status: 'pendiente', completedAt: null },
+        { id: 3, seq: 3, arrowsPerEnd: 3, status: 'pendiente', completedAt: null },
+      ],
+    },
+    isLoading: false,
+    isError: false,
+  }),
+}));
 
 import { Round } from './Round';
 
@@ -66,6 +79,13 @@ describe('Round + ScoreKeypad (FE-8)', () => {
     expect(screen.queryByLabelText('Flechas cargadas')).toBeNull();
     fireEvent.click(screen.getByText('Ana'));
     expect(screen.getByLabelText('Flechas cargadas')).toBeInTheDocument();
+  });
+
+  it('muestra el stepper de progreso del torneo', () => {
+    state.round = roundView();
+    renderPage();
+    expect(screen.getByRole('navigation', { name: 'Progreso del torneo' })).toBeInTheDocument();
+    expect(screen.getByText('Tirada 1 de 3')).toBeInTheDocument();
   });
 
   it('al completar el end autoguarda con las flechas en orden descendente', () => {
