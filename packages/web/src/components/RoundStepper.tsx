@@ -25,7 +25,7 @@ export function RoundStepper({ tid, rounds, current }: RoundStepperProps) {
       <p className="mb-1.5 text-muted text-xs">
         Tirada {current} de {rounds.length}
       </p>
-      <ol className="flex items-center overflow-x-auto pb-1">
+      <ol className="flex items-center overflow-x-auto px-1 py-2">
         {rounds.map((r, i) => {
           const isCurrent = r.seq === current;
           return (
