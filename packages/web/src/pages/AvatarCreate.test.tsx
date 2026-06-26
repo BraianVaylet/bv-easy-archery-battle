@@ -25,7 +25,7 @@ function renderPage() {
 describe('AvatarCreate', () => {
   it('valida campos requeridos y no muta si falta el alias/arco/color', () => {
     renderPage();
-    fireEvent.click(screen.getByRole('button', { name: 'Crear avatar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Crear arquero' }));
     expect(createMutate).not.toHaveBeenCalled();
     expect(screen.getByText('Ingresá un alias.')).toBeInTheDocument();
   });
@@ -36,7 +36,7 @@ describe('AvatarCreate', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Recurvo olímpico' }));
     fireEvent.click(screen.getByRole('button', { name: 'Azul' }));
     fireEvent.click(screen.getByRole('checkbox'));
-    fireEvent.click(screen.getByRole('button', { name: 'Crear avatar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Crear arquero' }));
 
     expect(createMutate).toHaveBeenCalledWith(
       { alias: 'Brai', bowCategory: 'recurvo_olimpico', color: 'blue', beginner: true },

@@ -42,10 +42,10 @@ export function AvatarManage() {
   const { archived, isLoading: loadingArchived } = useArchivedAvatars();
 
   return (
-    <AppShell title="Avatares" showBack>
+    <AppShell title="Arqueros" showBack>
       <Link to="/avatars/new" className="mb-5 block">
         <Button className="w-full">
-          <Plus size={16} aria-hidden /> Nuevo avatar
+          <Plus size={16} aria-hidden /> Nuevo arquero
         </Button>
       </Link>
 
@@ -57,12 +57,12 @@ export function AvatarManage() {
           </div>
         ) : avatars.length === 0 ? (
           <EmptyState
-            title="No tenés avatares"
+            title="No tenés arqueros"
             description="Creá uno para usarlo en tus torneos."
             action={
               <Link to="/avatars/new">
                 <Button size="sm">
-                  <Plus size={16} aria-hidden /> Crear avatar
+                  <Plus size={16} aria-hidden /> Crear arquero
                 </Button>
               </Link>
             }
