@@ -1,3 +1,4 @@
+import { LogIn, UserPlus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { AccentPicker } from '../components/AccentPicker';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -8,7 +9,10 @@ export function Landing() {
   return (
     <main className="mx-auto flex min-h-full max-w-md flex-col gap-6 px-5 py-10">
       <header className="flex items-center justify-between">
-        <h1 className="font-semibold text-fg text-xl">BV Archery Battle</h1>
+        <div className="flex items-center gap-2.5">
+          <img src="/icon.svg" alt="" aria-hidden className="h-9 w-9 rounded-lg" />
+          <h1 className="font-semibold text-fg text-xl">BV Archery Battle</h1>
+        </div>
         <ThemeToggle />
       </header>
 
@@ -20,12 +24,12 @@ export function Landing() {
         <div className="mt-5 flex flex-col gap-3">
           <Link to="/register">
             <Button className="w-full" size="lg">
-              Crear cuenta
+              <UserPlus size={18} aria-hidden /> Crear cuenta
             </Button>
           </Link>
           <Link to="/login">
             <Button className="w-full" variant="secondary" size="lg">
-              Ya tengo cuenta
+              <LogIn size={18} aria-hidden /> Ya tengo cuenta
             </Button>
           </Link>
         </div>

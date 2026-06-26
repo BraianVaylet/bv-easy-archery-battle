@@ -5,6 +5,7 @@ import {
   type BowCategory,
   avatarCreateSchema,
 } from '@bv/shared';
+import { Check, Plus } from 'lucide-react';
 import { type FormEvent, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAvatars } from '../avatars/useAvatars';
@@ -136,19 +137,23 @@ export function AvatarCreate() {
           <FieldError>{errors.color}</FieldError>
         </fieldset>
 
-        <label className="flex items-center gap-3 text-fg text-sm">
+        <label className="flex cursor-pointer items-center gap-3 text-fg text-sm">
           <input
             type="checkbox"
             checked={beginner}
             onChange={(e) => setBeginner(e.target.checked)}
-            className="h-5 w-5 accent-[var(--primary)]"
+            className="peer sr-only"
           />
+          <span className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-surface-2 px-0.5 transition-colors peer-checked:bg-primary peer-checked:[&>span]:translate-x-5 peer-focus-visible:ring-2 peer-focus-visible:ring-fg peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-surface">
+            <span className="block h-5 w-5 rounded-full bg-white shadow-sm transition-transform" />
+          </span>
           Principiante (categoría escuela)
         </label>
 
         {mutation.error && <FieldError>{(mutation.error as Error).message}</FieldError>}
 
         <Button type="submit" size="lg" loading={mutation.isPending}>
+          {editing ? <Check size={18} aria-hidden /> : <Plus size={18} aria-hidden />}
           {editing ? 'Guardar cambios' : 'Crear avatar'}
         </Button>
       </form>

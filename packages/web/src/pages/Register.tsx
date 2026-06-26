@@ -1,4 +1,5 @@
 import { SECURITY_QUESTIONS } from '@bv/shared';
+import { UserPlus } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
@@ -88,7 +89,7 @@ export function Register() {
         <FieldError>{register.error ? (register.error as Error).message : undefined}</FieldError>
 
         <Button type="submit" size="lg" loading={register.isPending}>
-          Crear cuenta
+          <UserPlus size={18} aria-hidden /> Crear cuenta
         </Button>
       </form>
     </AuthScreen>

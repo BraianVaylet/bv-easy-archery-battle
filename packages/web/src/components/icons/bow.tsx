@@ -33,14 +33,13 @@ function Svg({
   );
 }
 
-/** Compuesto: limbo vertical con levas (poleas) arriba y abajo + cable. */
+/** Compuesto: mira de scope con un solo pin vertical. */
 export function CompoundIcon(p: BowIconProps) {
   return (
     <Svg {...p}>
-      <circle cx="7" cy="5" r="2.4" />
-      <circle cx="7" cy="19" r="2.4" />
-      <path d="M7 5V19" />
-      <path d="M9.2 5C15.5 8 15.5 16 9.2 19" />
+      <circle cx="12" cy="12" r="7.5" />
+      <path d="M12 4.5V12" />
+      <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
     </Svg>
   );
 }
@@ -58,38 +57,38 @@ export function HunterIcon(p: BowIconProps) {
   );
 }
 
-/** Raso (barebow): una flecha. */
+/** Raso (barebow): flecha con vanes (emplumado). */
 export function ArrowIcon(p: BowIconProps) {
   return (
     <Svg {...p}>
-      <path d="M5 19 19 5" />
-      <path d="M14 5h5v5" />
-      <path d="M5 15v4h4" />
+      <path d="M12 3.5V20.5" />
+      <path d="M8.5 7 12 3.5 15.5 7" />
+      <path d="M12 14.5 8.5 20.5" />
+      <path d="M12 14.5 15.5 20.5" />
     </Svg>
   );
 }
 
-/** Recurvo olímpico: aros olímpicos (3 arriba, 2 abajo). */
+/** Recurvo olímpico: estabilizador de 3 barras (varilla larga + V-bar). */
 export function OlympicIcon(p: BowIconProps) {
   return (
-    <Svg strokeWidth={1.4} {...p}>
-      <circle cx="7" cy="10" r="2.9" />
-      <circle cx="12" cy="10" r="2.9" />
-      <circle cx="17" cy="10" r="2.9" />
-      <circle cx="9.5" cy="14" r="2.9" />
-      <circle cx="14.5" cy="14" r="2.9" />
+    <Svg {...p}>
+      <circle cx="8.5" cy="12" r="2.2" />
+      <path d="M10.7 12H21" />
+      <path d="M7 10.3 3.5 6.8" />
+      <path d="M7 13.7 3.5 17.2" />
     </Svg>
   );
 }
 
-/** Recurvo tradicional: arco con puntas recurvadas + cuerda. */
+/** Recurvo tradicional: arco con palas marcadamente recurvadas + cuerda. */
 export function RecurveIcon(p: BowIconProps) {
   return (
     <Svg {...p}>
-      <path d="M8 3C15 7 15 17 8 21" />
-      <path d="M8 3C6 4.5 6.2 5.5 9 6" />
-      <path d="M8 21C6 19.5 6.2 18.5 9 18" />
-      <path d="M8 3V21" />
+      <path d="M9 3C16 7 16 17 9 21" />
+      <path d="M9 3C4 3.5 4.5 7 9.5 7" />
+      <path d="M9 21C4 20.5 4.5 17 9.5 17" />
+      <path d="M9 3V21" />
     </Svg>
   );
 }

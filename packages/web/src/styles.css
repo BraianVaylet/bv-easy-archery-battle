@@ -3,32 +3,37 @@
 /* ── Tokens semánticos (claro) ─────────────────────────────────────────────
    Ver docs/DESIGN_SYSTEM.md §1. Los `--primary*` los sobrescribe el acento
    (script anti-FOUC en index.html + ThemeProvider). */
+/* Paleta cálida estilo Claude (cream/ink). El acento lo sobrescribe el script
+   anti-FOUC + ThemeProvider; el resto son neutros cálidos. */
 :root {
-  --bg: #f7f7f8;
+  --bg: #faf9f5;
   --surface: #ffffff;
-  --surface-2: #eeeef0;
-  --border: #d9d9de;
-  --fg: #1a1a1e;
-  --muted: #5b5b66;
-  --dim: #9a9aa6;
-  --primary: #f76808;
-  --primary-strong: #d2570a;
-  --primary-soft: rgba(247, 104, 8, 0.16);
+  --surface-2: #f0eee6;
+  --border: #e4e1d7;
+  --fg: #1a1915;
+  --muted: #6b6862;
+  --dim: #9c998f;
+  --primary: #c96442;
+  --primary-strong: #b4543a;
+  --primary-soft: rgba(201, 100, 66, 0.14);
   --on-primary: #ffffff;
-  --danger: #e5484d;
-  --ok: #30a46c;
+  --danger: #c0584e;
+  --ok: #4f8a5b;
+  /* Puntillismo de fondo: apenas más oscuro que el bg. */
+  --dot: rgba(60, 52, 36, 0.05);
 }
 
 [data-theme="dark"] {
-  --bg: #0f0f12;
-  --surface: #17171b;
-  --surface-2: #202027;
-  --border: #2c2c34;
-  --fg: #f2f2f5;
-  --muted: #a0a0ad;
-  --dim: #6b6b78;
-  --danger: #ff6369;
-  --ok: #46c98a;
+  --bg: #1f1e1d;
+  --surface: #292827;
+  --surface-2: #35332f;
+  --border: #3d3a35;
+  --fg: #f4f2ec;
+  --muted: #aca899;
+  --dim: #6e6b62;
+  --danger: #e0796d;
+  --ok: #7fb389;
+  --dot: rgba(0, 0, 0, 0.22);
 }
 
 /* ── Mapeo de tokens a utilidades Tailwind (bg-surface, text-muted, …) ────── */
@@ -56,12 +61,14 @@ body,
 
 body {
   margin: 0;
-  background: var(--bg);
   color: var(--fg);
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  font-feature-settings: "cv11", "ss01";
+  font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Fondo + puntillismo sutil (un punto cada 18px). */
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--dot) 1px, transparent 1.2px);
+  background-size: 18px 18px;
 }
 
 :focus-visible {

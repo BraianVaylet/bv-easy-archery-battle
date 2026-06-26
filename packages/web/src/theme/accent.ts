@@ -15,17 +15,17 @@ export interface AccentOption {
   hex: string;
 }
 
-/** Paleta de acentos (≥6). */
+/** Paleta de acentos (≥6). Por defecto el coral de Claude. */
 export const ACCENTS: readonly AccentOption[] = [
+  { key: 'coral', label: 'Coral', hex: '#C96442' },
   { key: 'orange', label: 'Naranja', hex: '#F76808' },
   { key: 'green', label: 'Verde', hex: '#30A46C' },
   { key: 'blue', label: 'Azul', hex: '#0091FF' },
   { key: 'violet', label: 'Violeta', hex: '#8E4EC6' },
-  { key: 'red', label: 'Rojo', hex: '#E5484D' },
   { key: 'teal', label: 'Teal', hex: '#12A594' },
 ];
 
-export const DEFAULT_ACCENT = ACCENTS[0]?.hex ?? '#F76808';
+export const DEFAULT_ACCENT = ACCENTS[0]?.hex ?? '#C96442';
 export const THEME_KEY = 'bv-theme';
 export const ACCENT_KEY = 'bv-accent';
 

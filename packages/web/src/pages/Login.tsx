@@ -1,3 +1,4 @@
+import { LogIn } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
@@ -55,7 +56,7 @@ export function Login() {
         <FieldError>{login.error ? (login.error as Error).message : undefined}</FieldError>
 
         <Button type="submit" size="lg" loading={login.isPending}>
-          Entrar
+          <LogIn size={18} aria-hidden /> Entrar
         </Button>
 
         <Link to="/recover" className="text-center text-muted text-sm hover:text-fg">

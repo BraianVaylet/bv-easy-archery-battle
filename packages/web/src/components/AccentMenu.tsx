@@ -1,4 +1,4 @@
-import { Palette } from 'lucide-react';
+import { Check, Palette } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '../lib/cn';
 import { useTheme } from '../theme/ThemeProvider';
@@ -39,7 +39,7 @@ export function AccentMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-2 grid grid-cols-3 gap-2 rounded-xl border border-border bg-surface p-3 shadow-lg">
+        <div className="absolute right-0 z-20 mt-2 flex w-44 flex-col gap-0.5 rounded-xl border border-border bg-surface p-1.5 shadow-lg">
           {ACCENTS.map((a) => {
             const active = accent.toLowerCase() === a.hex.toLowerCase();
             return (
@@ -52,13 +52,19 @@ export function AccentMenu() {
                 }}
                 aria-label={`Acento ${a.label}`}
                 aria-pressed={active}
-                title={a.label}
-                style={{ backgroundColor: a.hex }}
                 className={cn(
-                  'h-9 w-9 rounded-full transition-transform hover:scale-110',
-                  active && 'ring-2 ring-fg ring-offset-2 ring-offset-surface',
+                  'flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-surface-2',
+                  active && 'bg-surface-2',
                 )}
-              />
+              >
+                <span
+                  className="h-5 w-5 shrink-0 rounded-full border border-black/10"
+                  style={{ backgroundColor: a.hex }}
+                  aria-hidden
+                />
+                <span className="flex-1 text-fg">{a.label}</span>
+                {active && <Check size={15} className="text-primary" aria-hidden />}
+              </button>
             );
           })}
         </div>

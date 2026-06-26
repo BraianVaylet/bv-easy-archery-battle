@@ -1,4 +1,4 @@
-import { LogOut } from 'lucide-react';
+import { LogOut, Plus, Trophy, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import { AppShell } from '../components/AppShell';
@@ -28,17 +28,22 @@ export function Home() {
         </button>
       }
     >
-      <p className="mb-4 text-muted text-sm">
-        Hola, <span className="font-medium text-fg">{user?.alias}</span>.
-      </p>
+      <div className="mb-5 flex items-center gap-3">
+        <img src="/icon.svg" alt="" aria-hidden className="h-10 w-10 rounded-lg" />
+        <p className="text-muted text-sm">
+          Hola, <span className="font-medium text-fg">{user?.alias}</span>.
+        </p>
+      </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3">
         <Link to="/tournaments/new">
-          <Button className="w-full">Nuevo torneo</Button>
+          <Button className="w-full">
+            <Trophy size={18} aria-hidden /> Nuevo torneo
+          </Button>
         </Link>
         <Link to="/avatars">
           <Button className="w-full" variant="secondary">
-            Avatares
+            <Users size={18} aria-hidden /> Avatares
           </Button>
         </Link>
       </div>
@@ -55,7 +60,9 @@ export function Home() {
             description="Creá un torneo para empezar a cargar puntajes."
             action={
               <Link to="/tournaments/new">
-                <Button size="sm">Crear torneo</Button>
+                <Button size="sm">
+                  <Plus size={16} aria-hidden /> Crear torneo
+                </Button>
               </Link>
             }
           />

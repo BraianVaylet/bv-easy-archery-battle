@@ -1,5 +1,6 @@
+import { ArrowLeft, House } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AccentMenu } from './AccentMenu';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -12,9 +13,15 @@ interface AppShellProps {
   children: ReactNode;
 }
 
-/** Layout móvil: header compacto (back + título + acento/tema + acción) + contenido. */
+/** Estilo común de los botones-icono del header. */
+export const HEADER_BTN =
+  'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-fg transition-colors hover:bg-surface-2';
+
+/** Layout móvil: header compacto (back/home + título + acento/tema + acción) + contenido. */
 export function AppShell({ title, showBack, action, children }: AppShellProps) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const atHome = pathname === '/';
 
   return (
     <div className="mx-auto flex min-h-full max-w-md flex-col">
@@ -24,12 +31,22 @@ export function AppShell({ title, showBack, action, children }: AppShellProps) {
             type="button"
             onClick={() => navigate(-1)}
             aria-label="Volver"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-fg hover:bg-surface-2"
+            className={HEADER_BTN}
           >
-            ←
+            <ArrowLeft size={18} aria-hidden />
           </button>
         )}
-        <h1 className="flex-1 truncate font-semibold text-fg">{title}</h1>
+        {!atHome && (
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            aria-label="Ir a Inicio"
+            className={HEADER_BTN}
+          >
+            <House size={18} aria-hidden />
+          </button>
+        )}
+        <h1 className="flex-1 truncate px-1 font-semibold text-fg">{title}</h1>
         <div className="flex shrink-0 items-center gap-1">
           <AccentMenu />
           <ThemeToggle />

@@ -58,12 +58,12 @@ describe('TournamentCreate (FE-6)', () => {
 
   it('crea el torneo con los defaults correctos', () => {
     renderPage();
-    fireEvent.change(screen.getByLabelText('Nombre'), { target: { value: 'Copa' } });
+    fireEvent.change(screen.getByLabelText('Nombre del torneo'), { target: { value: 'Copa' } });
     fireEvent.click(screen.getByText('Robin'));
     fireEvent.click(screen.getByRole('button', { name: 'Crear torneo' }));
 
     expect(createMutate).toHaveBeenCalledWith(
-      { name: 'Copa', modality: 'sala', roundsCount: 10, arrowsPerEnd: 3, avatarIds: [5] },
+      { name: 'Copa', modality: 'sala', roundsCount: 5, arrowsPerEnd: 3, avatarIds: [5] },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     );
   });

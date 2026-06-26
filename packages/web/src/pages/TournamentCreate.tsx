@@ -4,13 +4,13 @@ import {
   BOW_CATEGORIES,
   BOW_CATEGORY_LABELS,
   DEFAULT_ARROWS,
-  DEFAULT_ROUNDS,
   MODALITIES,
   MODALITY_LABELS,
   type Modality,
   avatarCreateSchema,
   tournamentCreateSchema,
 } from '@bv/shared';
+import { Check, Plus, Trophy } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAvatars } from '../avatars/useAvatars';
@@ -28,7 +28,7 @@ export function TournamentCreate() {
   const [name, setName] = useState('');
   const [modality, setModality] = useState<Modality>('sala');
   // Campos numéricos como string: permiten quedar vacíos sin auto-setear 0.
-  const [roundsCount, setRoundsCount] = useState(String(DEFAULT_ROUNDS));
+  const [roundsCount, setRoundsCount] = useState('5');
   const [arrowsPerEnd, setArrowsPerEnd] = useState(String(DEFAULT_ARROWS.sala));
   const [selected, setSelected] = useState<number[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,7 +73,7 @@ export function TournamentCreate() {
     <AppShell title="Nuevo torneo" showBack>
       <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
         <div>
-          <Label htmlFor="name">Nombre</Label>
+          <Label htmlFor="name">Nombre del torneo</Label>
           <Input
             id="name"
             value={name}
@@ -142,7 +142,13 @@ export function TournamentCreate() {
           {avatars.length === 0 ? (
             <p className="text-muted text-sm">No tenés avatares. Creá uno con el botón de abajo.</p>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div
+              className={cn(
+                'flex flex-col gap-2',
+                // Más de 5 → altura máxima y scroll.
+                avatars.length > 5 && 'max-h-[19rem] overflow-y-auto pr-1',
+              )}
+            >
               {avatars.map((a) => (
                 <AvatarToggle
                   key={a.id}
@@ -163,7 +169,7 @@ export function TournamentCreate() {
         )}
 
         <Button type="submit" size="lg" loading={createTournament.isPending}>
-          Crear torneo
+          <Trophy size={18} aria-hidden /> Crear torneo
         </Button>
       </form>
     </AppShell>
@@ -194,7 +200,11 @@ function AvatarToggle({
         <span className="block truncate font-medium text-fg">{avatar.alias}</span>
         <span className="block text-muted text-xs">{BOW_CATEGORY_LABELS[avatar.bowCategory]}</span>
       </span>
-      <span className="text-muted text-sm">{selected ? '✓' : '+'}</span>
+      {selected ? (
+        <Check size={18} className="text-primary" aria-hidden />
+      ) : (
+        <Plus size={18} className="text-muted" aria-hidden />
+      )}
     </button>
   );
 }
@@ -212,7 +222,7 @@ function InlineAvatarCreate({ onCreated }: { onCreated: (a: Avatar) => void }) {
   if (!open) {
     return (
       <Button type="button" variant="secondary" onClick={() => setOpen(true)}>
-        + Crear avatar
+        <Plus size={16} aria-hidden /> Crear avatar
       </Button>
     );
   }

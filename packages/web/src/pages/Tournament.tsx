@@ -4,7 +4,7 @@ import {
   type RoundStatus,
   type TournamentParticipant,
 } from '@bv/shared';
-import { Check, Pencil, Plus } from 'lucide-react';
+import { ChartColumn, Check, Flag, Pencil, Plus, Trophy, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAvatars } from '../avatars/useAvatars';
@@ -26,12 +26,17 @@ const ROUND_BADGE: Record<RoundStatus, { label: string; className: string }> = {
   pendiente: { label: 'Pendiente', className: 'bg-surface-2 text-muted' },
 };
 
+const TOOLBAR_BTN =
+  'flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-surface text-fg transition-colors hover:bg-surface-2';
+
 export function Tournament() {
   const { id } = useParams();
   const tid = Number(id);
   const { tournament: t, isLoading, isError } = useTournament(tid);
   const finish = useFinishTournament(tid);
   const addRound = useAddRound(tid);
+  const [editingName, setEditingName] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   if (isLoading) {
     return (
@@ -56,13 +61,38 @@ export function Tournament() {
 
   return (
     <AppShell title={t.name} showBack>
-      <div className="mb-4 flex items-center justify-between gap-2">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <p className="text-muted text-sm">
           {`${t.participants.length} arqueros · ${finished ? 'Finalizado' : 'En curso'}`}
         </p>
+        <div className="flex items-center gap-1.5">
+          {!finished && (
+            <>
+              <button
+                type="button"
+                aria-label="Editar nombre"
+                className={TOOLBAR_BTN}
+                onClick={() => setEditingName((v) => !v)}
+              >
+                <Pencil size={16} aria-hidden />
+              </button>
+              <button
+                type="button"
+                aria-label="Agregar participantes"
+                className={TOOLBAR_BTN}
+                onClick={() => setAdding((v) => !v)}
+              >
+                <UserPlus size={16} aria-hidden />
+              </button>
+            </>
+          )}
+          <Link to={`/tournaments/${tid}/stats`} aria-label="Estadísticas" className={TOOLBAR_BTN}>
+            <ChartColumn size={16} aria-hidden />
+          </Link>
+        </div>
       </div>
 
-      {!finished && <EditName tid={tid} name={t.name} />}
+      {editingName && <EditName tid={tid} name={t.name} onDone={() => setEditingName(false)} />}
 
       <section className="mb-6">
         <h2 className="mb-2 font-semibold text-fg">Tiradas</h2>
@@ -81,6 +111,16 @@ export function Tournament() {
               </span>
             </Link>
           ))}
+          {!finished && (
+            <button
+              type="button"
+              onClick={() => addRound.mutate()}
+              disabled={addRound.isPending}
+              className="flex items-center justify-center gap-2 rounded-lg border border-border border-dashed px-4 py-3 text-muted text-sm transition-colors hover:bg-surface-2 hover:text-fg disabled:opacity-60"
+            >
+              <Plus size={16} aria-hidden /> Agregar tirada
+            </button>
+          )}
         </div>
       </section>
 
@@ -91,41 +131,26 @@ export function Tournament() {
         </Card>
       )}
 
-      {!finished && <AddParticipants tid={tid} participants={t.participants} />}
+      {!finished && adding && (
+        <AddParticipants tid={tid} participants={t.participants} onDone={() => setAdding(false)} />
+      )}
 
       <div className="flex flex-col gap-3">
         {hasPodium ? (
           <Link to={`/tournaments/${tid}/podium`}>
             <Button className="w-full" size="lg">
-              Ver podios
+              <Trophy size={18} aria-hidden /> Ver podios
             </Button>
           </Link>
         ) : (
           <Button className="w-full" size="lg" disabled title="Completá la primera tirada">
-            Ver podios
-          </Button>
-        )}
-
-        <Link to={`/tournaments/${tid}/stats`}>
-          <Button variant="secondary" className="w-full">
-            Estadísticas
-          </Button>
-        </Link>
-
-        {!finished && (
-          <Button
-            variant="secondary"
-            className="w-full"
-            loading={addRound.isPending}
-            onClick={() => addRound.mutate()}
-          >
-            Agregar tirada
+            <Trophy size={18} aria-hidden /> Ver podios
           </Button>
         )}
 
         {!finished && allComplete && (
           <Button className="w-full" loading={finish.isPending} onClick={() => finish.mutate()}>
-            Finalizar torneo
+            <Flag size={18} aria-hidden /> Finalizar torneo
           </Button>
         )}
         {finish.error && (
@@ -137,26 +162,9 @@ export function Tournament() {
 }
 
 /** Edición inline del nombre del torneo. */
-function EditName({ tid, name }: { tid: number; name: string }) {
-  const [editing, setEditing] = useState(false);
+function EditName({ tid, name, onDone }: { tid: number; name: string; onDone: () => void }) {
   const [value, setValue] = useState(name);
   const update = useUpdateTournament(tid);
-
-  if (!editing) {
-    return (
-      <button
-        type="button"
-        onClick={() => {
-          setValue(name);
-          setEditing(true);
-        }}
-        className="mb-5 inline-flex items-center gap-1.5 text-muted text-sm hover:text-fg"
-      >
-        <Pencil size={14} aria-hidden /> Editar nombre
-      </button>
-    );
-  }
-
   return (
     <div className="mb-5 flex items-center gap-2">
       <Input
@@ -168,12 +176,9 @@ function EditName({ tid, name }: { tid: number; name: string }) {
       <Button
         size="sm"
         loading={update.isPending}
-        onClick={() => update.mutate(value.trim(), { onSuccess: () => setEditing(false) })}
+        onClick={() => update.mutate(value.trim(), { onSuccess: onDone })}
       >
-        Guardar
-      </Button>
-      <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-        Cancelar
+        <Check size={16} aria-hidden /> Guardar
       </Button>
     </div>
   );
@@ -183,25 +188,18 @@ function EditName({ tid, name }: { tid: number; name: string }) {
 function AddParticipants({
   tid,
   participants,
+  onDone,
 }: {
   tid: number;
   participants: TournamentParticipant[];
+  onDone: () => void;
 }) {
-  const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<number[]>([]);
   const { avatars } = useAvatars();
   const add = useAddParticipants(tid);
 
   const inTournament = new Set(participants.map((p) => p.avatarId));
   const available = avatars.filter((a) => !inTournament.has(a.id));
-
-  if (!open) {
-    return (
-      <Button variant="secondary" className="mb-6 w-full" onClick={() => setOpen(true)}>
-        <Plus size={16} aria-hidden /> Agregar participantes
-      </Button>
-    );
-  }
 
   const toggle = (avatarId: number) =>
     setSelected((s) => (s.includes(avatarId) ? s.filter((x) => x !== avatarId) : [...s, avatarId]));
@@ -212,7 +210,12 @@ function AddParticipants({
       {available.length === 0 ? (
         <p className="text-muted text-sm">No hay avatares disponibles para agregar.</p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div
+          className={cn(
+            'flex flex-col gap-2',
+            available.length > 5 && 'max-h-[19rem] overflow-y-auto pr-1',
+          )}
+        >
           {available.map((a) => {
             const checked = selected.includes(a.id);
             return (
@@ -251,14 +254,14 @@ function AddParticipants({
             add.mutate(selected, {
               onSuccess: () => {
                 setSelected([]);
-                setOpen(false);
+                onDone();
               },
             })
           }
         >
-          Agregar ({selected.length})
+          <UserPlus size={16} aria-hidden /> Agregar ({selected.length})
         </Button>
-        <Button variant="ghost" onClick={() => setOpen(false)}>
+        <Button variant="ghost" onClick={onDone}>
           Cerrar
         </Button>
       </div>
