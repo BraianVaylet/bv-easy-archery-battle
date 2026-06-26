@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  type BowCategory,
-  type Stake,
-  assignNewParticipants,
-  buildPairs,
-} from '../src/index';
+import { type BowCategory, type Stake, assignNewParticipants, buildPairs } from '../src/index';
 
 const p = (alias: string, stake: Stake | null, bowCategory: BowCategory = 'compuesto') => ({
   alias,
@@ -96,11 +91,7 @@ describe('assignNewParticipants (incremental)', () => {
       { pairIndex: 0, stake: 'roja' as Stake, count: 1 },
       { pairIndex: 1, stake: 'azul' as Stake, count: 1 },
     ];
-    const out = assignNewParticipants(existing, [
-      p('r', 'roja'),
-      p('a1', 'azul'),
-      p('a2', 'azul'),
-    ]);
+    const out = assignNewParticipants(existing, [p('r', 'roja'), p('a1', 'azul'), p('a2', 'azul')]);
     const byAlias = new Map(out.map((o) => [o.item.alias, o]));
     // r completa el par roja (0/B); a1 completa el azul (1/B); a2 va a un par nuevo (índice 2).
     expect(byAlias.get('r')).toMatchObject({ pairIndex: 0, position: 'B' });

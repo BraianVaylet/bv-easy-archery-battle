@@ -170,7 +170,10 @@ export function createTournamentService(repo: TournamentRepo, avatarRepo: Avatar
       // pares nuevos sólo con los recién llegados. No toca los existentes.
       const assign: AssignFn = (existingPairs, newcomers) => {
         const out = new Map<number, { pairIndex: number; pairPosition: 'A' | 'B' | 'C' }>();
-        for (const { item, pairIndex, position } of assignNewParticipants(existingPairs, newcomers)) {
+        for (const { item, pairIndex, position } of assignNewParticipants(
+          existingPairs,
+          newcomers,
+        )) {
           out.set(item.id, { pairIndex, pairPosition: position });
         }
         return out;
