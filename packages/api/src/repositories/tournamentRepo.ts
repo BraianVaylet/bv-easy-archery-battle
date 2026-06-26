@@ -35,6 +35,9 @@ export type FinishResult = 'ok' | 'not_found' | 'already_finished' | 'incomplete
 /** Resultado de una mutación que exige torneo existente y en curso. */
 export type MutateResult = 'ok' | 'not_found' | 'not_open';
 
+/** Resultado de eliminar una tirada. */
+export type DeleteRoundResult = MutateResult | 'round_not_found' | 'last_round';
+
 /** Participante mínimo para re-parear al agregar gente. */
 export interface PairingInput {
   id: number;
@@ -214,6 +217,41 @@ export function createTournamentRepo(db: DB) {
   const participantInTournament = db.prepare<[number, number], { id: number }>(
     'SELECT id FROM tournament_participants WHERE id = ? AND tournament_id = ?',
   );
+  const roundBySeqFull = db.prepare<[number, number], { id: number; seq: number }>(
+    'SELECT id, seq FROM rounds WHERE tournament_id = ? AND seq = ?',
+  );
+  const countRounds = db.prepare<[number], { n: number }>(
+    'SELECT COUNT(*) AS n FROM rounds WHERE tournament_id = ?',
+  );
+  const scoresOfRound = db.prepare<
+    [number],
+    {
+      participant_id: number;
+      end_total: number;
+      inner_count: number;
+      second_count: number;
+      x_count: number;
+      m_count: number;
+    }
+  >(
+    'SELECT participant_id, end_total, inner_count, second_count, x_count, m_count FROM round_scores WHERE round_id = ?',
+  );
+  const decRollups = db.prepare(
+    `UPDATE tournament_participants
+       SET total_score = total_score - ?, total_inner = total_inner - ?, total_second = total_second - ?,
+           total_x = total_x - ?, total_m = total_m - ?, ends_completed = ends_completed - 1
+     WHERE id = ?`,
+  );
+  const deleteRoundStmt = db.prepare('DELETE FROM rounds WHERE id = ?');
+  const shiftSeqUp = db.prepare(
+    'UPDATE rounds SET seq = seq + 100000 WHERE tournament_id = ? AND seq > ?',
+  );
+  const shiftSeqDown = db.prepare(
+    'UPDATE rounds SET seq = seq - 100001 WHERE tournament_id = ? AND seq > 100000',
+  );
+  const bumpRoundsCount = db.prepare(
+    'UPDATE tournaments SET rounds_count = rounds_count + ? WHERE id = ?',
+  );
   const participantEnds = db.prepare<[number, number], { seq: number; arrows: string }>(
     `SELECT r.seq AS seq, s.arrows AS arrows
      FROM round_scores s JOIN rounds r ON r.id = s.round_id
@@ -236,8 +274,40 @@ export function createTournamentRepo(db: DB) {
     if (t.status !== 'en_curso') return 'not_open';
     const seq = (maxSeq.get(id)?.m ?? 0) + 1;
     insertRound.run(id, seq, t.arrows_per_end, now());
+    bumpRoundsCount.run(1, id);
     return 'ok';
   });
+
+  const deleteRoundTx = db.transaction(
+    (userId: number, id: number, seq: number): DeleteRoundResult => {
+      const t = findStatus.get(id, userId);
+      if (!t) return 'not_found';
+      if (t.status !== 'en_curso') return 'not_open';
+      const round = roundBySeqFull.get(id, seq);
+      if (!round) return 'round_not_found';
+      if ((countRounds.get(id)?.n ?? 0) <= 1) return 'last_round';
+
+      // Descuenta de los rollups los puntajes de esta tirada antes de borrarla.
+      for (const s of scoresOfRound.all(round.id)) {
+        decRollups.run(
+          s.end_total,
+          s.inner_count,
+          s.second_count,
+          s.x_count,
+          s.m_count,
+          s.participant_id,
+        );
+      }
+      deleteRoundStmt.run(round.id); // round_scores cae por ON DELETE CASCADE
+
+      // Renumera las tiradas siguientes para mantener seq contiguo (offset evita
+      // colisiones del UNIQUE(tournament_id, seq)).
+      shiftSeqUp.run(id, round.seq);
+      shiftSeqDown.run(id);
+      bumpRoundsCount.run(-1, id);
+      return 'ok';
+    },
+  );
 
   const addParticipantsTx = db.transaction(
     (userId: number, id: number, seeds: ParticipantSeed[], assign: AssignFn): MutateResult => {
@@ -355,6 +425,9 @@ export function createTournamentRepo(db: DB) {
     },
     addRound(userId: number, id: number): MutateResult {
       return addRoundTx(userId, id);
+    },
+    deleteRound(userId: number, id: number, seq: number): DeleteRoundResult {
+      return deleteRoundTx(userId, id, seq);
     },
     addParticipants(
       userId: number,

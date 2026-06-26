@@ -56,6 +56,12 @@ export function tournamentRoutes(service: TournamentService) {
     return c.json(service.addRound(c.get('userId'), id));
   });
 
+  r.delete('/:id/rounds/:seq', requireCsrf, (c) => {
+    const id = parseId(c.req.param('id'));
+    const seq = parseId(c.req.param('seq'));
+    return c.json(service.deleteRound(c.get('userId'), id, seq));
+  });
+
   r.post('/:id/finish', requireCsrf, (c) => {
     const id = parseId(c.req.param('id'));
     return c.json(service.finish(c.get('userId'), id));

@@ -8,13 +8,14 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-const { state, finishMutate, addMutate } = vi.hoisted(() => ({
+const { state, finishMutate, addMutate, deleteMutate } = vi.hoisted(() => ({
   state: {
     tournament: undefined as TournamentDetailView | undefined,
     avatars: [] as Avatar[],
   },
   finishMutate: vi.fn(),
   addMutate: vi.fn(),
+  deleteMutate: vi.fn(),
 }));
 
 const noopMut = { mutate: vi.fn(), isPending: false, error: null };
@@ -22,6 +23,7 @@ vi.mock('../tournaments/useTournaments', () => ({
   useTournament: () => ({ tournament: state.tournament, isLoading: false, isError: false }),
   useFinishTournament: () => ({ mutate: finishMutate, isPending: false, error: null }),
   useAddRound: () => noopMut,
+  useDeleteRound: () => ({ mutate: deleteMutate, isPending: false, error: null }),
   useUpdateTournament: () => noopMut,
   useAddParticipants: () => ({ mutate: addMutate, isPending: false, error: null }),
 }));
@@ -124,6 +126,24 @@ describe('Tournament (FE-7)', () => {
       '/tournaments/1/podium',
     );
     expect(screen.getByRole('button', { name: 'Finalizar torneo' })).toBeInTheDocument();
+  });
+
+  it('elimina una tirada con confirmación (varias tiradas)', () => {
+    state.avatars = [];
+    state.tournament = fixture({ rounds: [round(1, 'pendiente'), round(2, 'pendiente')] });
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar tirada 2' }));
+    expect(deleteMutate).toHaveBeenCalledWith(2);
+    confirmSpy.mockRestore();
+  });
+
+  it('no muestra eliminar si hay una sola tirada', () => {
+    state.avatars = [];
+    state.tournament = fixture({ rounds: [round(1, 'pendiente')] });
+    renderPage();
+    expect(screen.queryByRole('button', { name: 'Eliminar tirada 1' })).toBeNull();
   });
 
   it('agrega participantes disponibles a un torneo en curso', () => {

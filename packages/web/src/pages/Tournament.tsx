@@ -4,7 +4,7 @@ import {
   type RoundStatus,
   type TournamentParticipant,
 } from '@bv/shared';
-import { ChartColumn, Check, Flag, Pencil, Plus, Trophy, UserPlus } from 'lucide-react';
+import { ChartColumn, Check, Flag, Pencil, Plus, Trash2, Trophy, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAvatars } from '../avatars/useAvatars';
@@ -15,6 +15,7 @@ import { cn } from '../lib/cn';
 import {
   useAddParticipants,
   useAddRound,
+  useDeleteRound,
   useFinishTournament,
   useTournament,
   useUpdateTournament,
@@ -35,6 +36,7 @@ export function Tournament() {
   const { tournament: t, isLoading, isError } = useTournament(tid);
   const finish = useFinishTournament(tid);
   const addRound = useAddRound(tid);
+  const deleteRound = useDeleteRound(tid);
   const [editingName, setEditingName] = useState(false);
   const [adding, setAdding] = useState(false);
 
@@ -98,18 +100,37 @@ export function Tournament() {
         <h2 className="mb-2 font-semibold text-fg">Tiradas</h2>
         <div className="flex flex-col gap-2">
           {t.rounds.map((r) => (
-            <Link
-              key={r.id}
-              to={`/tournaments/${tid}/rounds/${r.seq}`}
-              className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
-            >
-              <span className="font-medium text-fg">Tirada {r.seq}</span>
-              <span
-                className={cn('rounded-full px-2 py-0.5 text-xs', ROUND_BADGE[r.status].className)}
+            <div key={r.id} className="flex items-center gap-2">
+              <Link
+                to={`/tournaments/${tid}/rounds/${r.seq}`}
+                className="flex flex-1 items-center justify-between rounded-lg border border-border bg-surface px-4 py-3 transition-colors hover:bg-surface-2"
               >
-                {ROUND_BADGE[r.status].label}
-              </span>
-            </Link>
+                <span className="font-medium text-fg">Tirada {r.seq}</span>
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-xs',
+                    ROUND_BADGE[r.status].className,
+                  )}
+                >
+                  {ROUND_BADGE[r.status].label}
+                </span>
+              </Link>
+              {!finished && t.rounds.length > 1 && (
+                <button
+                  type="button"
+                  aria-label={`Eliminar tirada ${r.seq}`}
+                  disabled={deleteRound.isPending}
+                  onClick={() => {
+                    if (window.confirm(`¿Eliminar la tirada ${r.seq}? Se perderán sus puntajes.`)) {
+                      deleteRound.mutate(r.seq);
+                    }
+                  }}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-danger/10 hover:text-danger disabled:opacity-50"
+                >
+                  <Trash2 size={16} aria-hidden />
+                </button>
+              )}
+            </div>
           ))}
           {!finished && (
             <button

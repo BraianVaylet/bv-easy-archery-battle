@@ -139,6 +139,15 @@ export function createTournamentService(repo: TournamentRepo, avatarRepo: Avatar
       return detailView(repo, userId, id);
     },
 
+    deleteRound(userId: number, id: number, seq: number): TournamentDetailView {
+      const result = repo.deleteRound(userId, id, seq);
+      if (result === 'not_found') throw notFound('El torneo no existe.');
+      if (result === 'not_open') throw conflict('El torneo no está en curso.');
+      if (result === 'round_not_found') throw notFound('La tirada no existe.');
+      if (result === 'last_round') throw conflict('No podés eliminar la única tirada.');
+      return detailView(repo, userId, id);
+    },
+
     addParticipants(userId: number, id: number, input: AddParticipantsInput): TournamentDetailView {
       const detail = repo.getDetail(userId, id);
       if (!detail) throw notFound('El torneo no existe.');

@@ -89,6 +89,15 @@ export function useAddRound(id: number) {
   });
 }
 
+/** Eliminar una tirada de un torneo en curso (para terminarlo antes). */
+export function useDeleteRound(id: number) {
+  const invalidate = useInvalidateTournament(id);
+  return useMutation({
+    mutationFn: (seq: number) => api.del<TournamentDetailView>(`/tournaments/${id}/rounds/${seq}`),
+    onSuccess: invalidate,
+  });
+}
+
 /** Podios del torneo (general + por categoría + escuela). */
 export function usePodium(id: number) {
   const { data, isLoading, isError } = useQuery<TournamentPodium>({

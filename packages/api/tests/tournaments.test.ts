@@ -348,6 +348,65 @@ describe('tournaments — editar en curso (agregar participantes/tirada)', () =>
     expect(res.status).toBe(200);
     const t = (await res.json()) as TournamentDetailView;
     expect(t.rounds.map((r) => r.seq)).toEqual([1, 2]);
+    expect(t.roundsCount).toBe(2);
+  });
+
+  async function seedRounds(rounds: number): Promise<{ id: number; pid: number }> {
+    const a = await makeAvatar(app, jar, 'Ana', 'compuesto');
+    const t = (await (
+      await createTournament(app, jar, {
+        name: 'Del',
+        modality: 'sala',
+        roundsCount: rounds,
+        arrowsPerEnd: 1,
+        avatarIds: [a],
+      })
+    ).json()) as TournamentDetail;
+    return { id: t.id, pid: t.participants[0]?.id ?? 0 };
+  }
+
+  it('DELETE /rounds/:seq elimina y renumera, baja rounds_count', async () => {
+    const { id } = await seedRounds(3);
+    const res = await jsonReq(app, `/api/tournaments/${id}/rounds/2`, 'DELETE', null, jar);
+    expect(res.status).toBe(200);
+    const t = (await res.json()) as TournamentDetailView;
+    expect(t.rounds.map((r) => r.seq)).toEqual([1, 2]); // 1 y 3 → renumeradas
+    expect(t.roundsCount).toBe(2);
+  });
+
+  it('eliminar una tirada con puntajes descuenta los rollups', async () => {
+    const { id, pid } = await seedRounds(2);
+    await jsonReq(
+      app,
+      `/api/tournaments/${id}/rounds/1/scores/${pid}`,
+      'PUT',
+      { arrows: ['X'] },
+      jar,
+    );
+    const before = (await detail(id)).participants.find((p) => p.id === pid);
+    expect(before?.totalScore).toBeGreaterThan(0);
+
+    const t = (await (
+      await jsonReq(app, `/api/tournaments/${id}/rounds/1`, 'DELETE', null, jar)
+    ).json()) as TournamentDetailView;
+    const ana = t.participants.find((p) => p.id === pid);
+    expect(ana?.totalScore).toBe(0);
+    expect(ana?.endsCompleted).toBe(0);
+    expect(t.rounds.map((r) => r.seq)).toEqual([1]);
+  });
+
+  it('no permite eliminar la única tirada (409)', async () => {
+    const { id } = await seed();
+    expect(
+      (await jsonReq(app, `/api/tournaments/${id}/rounds/1`, 'DELETE', null, jar)).status,
+    ).toBe(409);
+  });
+
+  it('eliminar una tirada inexistente → 404', async () => {
+    const { id } = await seedRounds(2);
+    expect(
+      (await jsonReq(app, `/api/tournaments/${id}/rounds/99`, 'DELETE', null, jar)).status,
+    ).toBe(404);
   });
 
   it('agregar participante re-parea y reabre tiradas completas (en_proceso)', async () => {
