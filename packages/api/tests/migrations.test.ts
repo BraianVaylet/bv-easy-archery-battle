@@ -78,3 +78,45 @@ describe('runFixups — pair_position drift', () => {
     expect(() => insertParticipant(db, 'C')).not.toThrow();
   });
 });
+
+const OLD_ROUNDS = `
+CREATE TABLE rounds (
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  tournament_id  INTEGER NOT NULL,
+  seq            INTEGER NOT NULL,
+  arrows_per_end INTEGER NOT NULL,
+  status         TEXT    NOT NULL DEFAULT 'pendiente' CHECK (status IN ('pendiente','completa')),
+  created_at     INTEGER NOT NULL,
+  completed_at   INTEGER,
+  UNIQUE (tournament_id, seq)
+);`;
+
+const insertRound = (db: Database.Database, status: string) =>
+  db
+    .prepare(
+      'INSERT INTO rounds (tournament_id, seq, arrows_per_end, status, created_at) VALUES (1, 1, 3, ?, 0)',
+    )
+    .run(status);
+
+describe('runFixups — rounds.status drift', () => {
+  it("agrega 'en_proceso' preservando datos", () => {
+    const db = new Database(':memory:');
+    db.pragma('foreign_keys = OFF');
+    db.exec(SCHEMA_SQL);
+    db.exec('DROP TABLE round_scores');
+    db.exec('DROP TABLE rounds');
+    db.exec(OLD_ROUNDS);
+    insertRound(db, 'completa');
+
+    expect(() => insertRound(db, 'en_proceso')).toThrow();
+    runFixups(db);
+
+    const sql = (
+      db.prepare("SELECT sql FROM sqlite_master WHERE name='rounds'").get() as { sql: string }
+    ).sql;
+    expect(sql).toContain("'en_proceso'");
+    db.pragma('foreign_keys = OFF');
+    db.exec('UPDATE rounds SET seq = 2 WHERE seq = 1'); // libera el UNIQUE
+    expect(() => insertRound(db, 'en_proceso')).not.toThrow();
+  });
+});

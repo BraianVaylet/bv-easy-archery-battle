@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS rounds (
   tournament_id  INTEGER NOT NULL,
   seq            INTEGER NOT NULL,
   arrows_per_end INTEGER NOT NULL,
-  status         TEXT    NOT NULL DEFAULT 'pendiente' CHECK (status IN ('pendiente','completa')),
+  status         TEXT    NOT NULL DEFAULT 'pendiente' CHECK (status IN ('pendiente','en_proceso','completa')),
   created_at     INTEGER NOT NULL,
   completed_at   INTEGER,
   FOREIGN KEY (tournament_id) REFERENCES tournaments (id) ON DELETE CASCADE,

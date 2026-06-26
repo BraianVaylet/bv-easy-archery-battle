@@ -167,10 +167,10 @@ export const SALA_DISTANCE = 18;
 export const TOURNAMENT_STATUSES = ['en_curso', 'finalizado'] as const;
 export type TournamentStatus = (typeof TOURNAMENT_STATUSES)[number];
 
-export const ROUND_STATUSES = ['pendiente', 'completa'] as const;
+export const ROUND_STATUSES = ['pendiente', 'en_proceso', 'completa'] as const;
 export type RoundStatus = (typeof ROUND_STATUSES)[number];
 
-// A/B en pares; C solo para el trío sobrante cuando el total es impar.
+// A/B en pares; C queda por compatibilidad de datos viejos (ya no se generan tríos).
 export const PAIR_POSITIONS = ['A', 'B', 'C'] as const;
 export type PairPosition = (typeof PAIR_POSITIONS)[number];
 

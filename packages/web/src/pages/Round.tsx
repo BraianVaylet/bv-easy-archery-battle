@@ -1,4 +1,9 @@
-import { type RoundParticipantEntry, SCORING, sortArrowsDescending } from '@bv/shared';
+import {
+  BOW_CATEGORY_LABELS,
+  type RoundParticipantEntry,
+  SCORING,
+  sortArrowsDescending,
+} from '@bv/shared';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AppShell } from '../components/AppShell';
@@ -79,6 +84,7 @@ export function Round() {
             key={pairIndex}
             pairIndex={pairIndex}
             stake={entries[0]?.participant.stake ?? null}
+            categories={entries.map((e) => BOW_CATEGORY_LABELS[e.participant.bowCategory])}
           >
             {entries.map((e) => {
               const isActive = activeId === e.participant.id;

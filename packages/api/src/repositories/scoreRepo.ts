@@ -137,6 +137,9 @@ export function createScoreRepo(db: DB) {
   const completeRound = db.prepare(
     "UPDATE rounds SET status = 'completa', completed_at = ? WHERE id = ? AND status != 'completa'",
   );
+  const markInProcess = db.prepare(
+    "UPDATE rounds SET status = 'en_proceso' WHERE id = ? AND status = 'pendiente'",
+  );
 
   const save = db.transaction(
     (params: SaveScoreParams): { score: RoundScore; roundStatus: RoundStatus } => {
@@ -191,11 +194,14 @@ export function createScoreRepo(db: DB) {
         );
       }
 
-      let roundStatus: RoundStatus = 'pendiente';
+      let roundStatus: RoundStatus = 'en_proceso';
       const scored = countScores.get(roundId)?.n ?? 0;
       if (scored >= expectedParticipants) {
         completeRound.run(ts, roundId);
         roundStatus = 'completa';
+      } else {
+        // Parcial: al menos una carga pero faltan participantes → en proceso.
+        markInProcess.run(roundId);
       }
 
       const score = toScore(getScore.get(roundId, participantId) as ScoreRow);

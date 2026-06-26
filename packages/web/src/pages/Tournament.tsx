@@ -1,9 +1,15 @@
-import { MODALITY_LABELS, type PodiumEntry } from '@bv/shared';
+import { MODALITY_LABELS, type PodiumEntry, type RoundStatus } from '@bv/shared';
 import { Link, useParams } from 'react-router-dom';
 import { AppShell } from '../components/AppShell';
 import { Button, Card, Spinner } from '../components/ui';
 import { cn } from '../lib/cn';
 import { useFinishTournament, useTournament } from '../tournaments/useTournaments';
+
+const ROUND_BADGE: Record<RoundStatus, { label: string; className: string }> = {
+  completa: { label: 'Completa', className: 'bg-primary-soft text-primary' },
+  en_proceso: { label: 'En proceso', className: 'bg-amber-500/15 text-amber-600' },
+  pendiente: { label: 'Pendiente', className: 'bg-surface-2 text-muted' },
+};
 
 export function Tournament() {
   const { id } = useParams();
@@ -30,6 +36,7 @@ export function Tournament() {
   }
 
   const allComplete = t.rounds.length > 0 && t.rounds.every((r) => r.status === 'completa');
+  const hasPodium = t.rounds.some((r) => r.status === 'completa');
   const finished = t.status === 'finalizado';
 
   return (
@@ -50,14 +57,9 @@ export function Tournament() {
             >
               <span className="font-medium text-fg">Tirada {r.seq}</span>
               <span
-                className={cn(
-                  'rounded-full px-2 py-0.5 text-xs',
-                  r.status === 'completa'
-                    ? 'bg-primary-soft text-primary'
-                    : 'bg-surface-2 text-muted',
-                )}
+                className={cn('rounded-full px-2 py-0.5 text-xs', ROUND_BADGE[r.status].className)}
               >
-                {r.status === 'completa' ? 'Completa' : 'Pendiente'}
+                {ROUND_BADGE[r.status].label}
               </span>
             </Link>
           ))}
@@ -72,14 +74,14 @@ export function Tournament() {
       )}
 
       <div className="flex flex-col gap-3">
-        {allComplete ? (
+        {hasPodium ? (
           <Link to={`/tournaments/${tid}/podium`}>
             <Button className="w-full" size="lg">
               Ver podios
             </Button>
           </Link>
         ) : (
-          <Button className="w-full" size="lg" disabled title="Completá todas las tiradas">
+          <Button className="w-full" size="lg" disabled title="Completá la primera tirada">
             Ver podios
           </Button>
         )}

@@ -44,7 +44,7 @@ describe('buildPairs', () => {
     ]);
   });
 
-  it('total impar en una estaca → trío en el último par', () => {
+  it('total impar → el último arquero tira solo (nunca trío)', () => {
     const out = buildPairs([
       p('a', 'roja'),
       p('b', 'roja'),
@@ -53,9 +53,10 @@ describe('buildPairs', () => {
       p('e', 'roja'),
     ]);
     const pairs = pairsOf(out);
-    expect(pairs).toHaveLength(2);
-    expect(pairs[1]).toHaveLength(3); // trío
-    expect(out.some((o) => o.position === 'C')).toBe(true);
+    expect(pairs).toHaveLength(3); // 2 pares + 1 solo
+    expect(pairs[2]).toHaveLength(1); // arquero solo
+    expect(out.every((o) => o.position === 'A' || o.position === 'B')).toBe(true);
+    expect(out.some((o) => o.position === 'C')).toBe(false);
   });
 
   it('sobrantes de distintas estacas se combinan', () => {

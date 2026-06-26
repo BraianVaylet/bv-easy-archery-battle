@@ -1,7 +1,8 @@
 /**
  * Pareo de arqueros (puro). Arma pares (2 por blanco) intentando emparejar
- * dentro de la misma estaca; el sobrante de cada estaca se combina al final, y
- * un único sobrante total forma un trío con el último par. Determinista.
+ * dentro de la misma estaca; el sobrante de cada estaca se combina al final.
+ * Nunca hay tríos: si el total es impar, el último arquero tira solo.
+ * Determinista.
  */
 
 import {
@@ -51,12 +52,7 @@ export function buildPairs<T extends Pairable>(participants: readonly T[]): Pair
     if (i + 1 < leftovers.length) {
       pairs.push([leftovers[i] as T, leftovers[i + 1] as T]);
     } else {
-      const last = pairs[pairs.length - 1];
-      if (last) {
-        last.push(leftovers[i] as T); // trío
-      } else {
-        pairs.push([leftovers[i] as T]); // único participante
-      }
+      pairs.push([leftovers[i] as T]); // impar → arquero solo (nunca trío)
     }
   }
 

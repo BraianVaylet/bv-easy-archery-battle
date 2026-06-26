@@ -81,11 +81,21 @@ describe('Tournament (FE-7)', () => {
     expect(screen.getByText('Ana')).toBeInTheDocument();
   });
 
-  it('deshabilita Podios y oculta Finalizar mientras faltan tiradas', () => {
-    state.tournament = fixture({ rounds: [round(1, 'pendiente'), round(2, 'completa')] });
+  it('deshabilita Podios mientras no haya ninguna tirada completa', () => {
+    state.tournament = fixture({ rounds: [round(1, 'pendiente'), round(2, 'en_proceso')] });
     renderPage();
     expect(screen.getByRole('button', { name: 'Ver podios' })).toBeDisabled();
     expect(screen.queryByRole('link', { name: 'Ver podios' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Finalizar torneo' })).toBeNull();
+  });
+
+  it('habilita Podios tras la primera tirada completa, pero oculta Finalizar', () => {
+    state.tournament = fixture({ rounds: [round(1, 'completa'), round(2, 'pendiente')] });
+    renderPage();
+    expect(screen.getByRole('link', { name: 'Ver podios' })).toHaveAttribute(
+      'href',
+      '/tournaments/1/podium',
+    );
     expect(screen.queryByRole('button', { name: 'Finalizar torneo' })).toBeNull();
   });
 

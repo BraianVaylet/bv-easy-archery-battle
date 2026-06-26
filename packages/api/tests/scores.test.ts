@@ -92,8 +92,8 @@ describe('scores — carga y autosave (BE-8)', () => {
     expect(out.score.xCount).toBe(1);
     expect(out.score.innerCount).toBe(1);
     expect(out.score.mCount).toBe(0);
-    // Solo 1 de 2 cargados → tirada sigue pendiente.
-    expect(out.round.status).toBe('pendiente');
+    // Solo 1 de 2 cargados → tirada en proceso (carga parcial).
+    expect(out.round.status).toBe('en_proceso');
   });
 
   it('marca la tirada completa cuando todos cargaron', async () => {

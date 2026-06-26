@@ -11,6 +11,41 @@ import type { DB } from './connection';
 
 export function runFixups(db: DB): void {
   fixPairPositionCheck(db);
+  fixRoundStatusCheck(db);
+}
+
+/**
+ * Drift: `rounds.status` tenía `CHECK IN ('pendiente','completa')` antes de
+ * agregar el estado intermedio 'en_proceso'. Reconstruye preservando datos.
+ * Idempotente.
+ */
+function fixRoundStatusCheck(db: DB): void {
+  const row = db
+    .prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='rounds'")
+    .get() as { sql: string } | undefined;
+  if (!row || row.sql.includes("'en_proceso'")) return;
+
+  db.exec(`
+    PRAGMA foreign_keys=OFF;
+    BEGIN;
+    CREATE TABLE rounds_new (
+      id             INTEGER PRIMARY KEY AUTOINCREMENT,
+      tournament_id  INTEGER NOT NULL,
+      seq            INTEGER NOT NULL,
+      arrows_per_end INTEGER NOT NULL,
+      status         TEXT    NOT NULL DEFAULT 'pendiente' CHECK (status IN ('pendiente','en_proceso','completa')),
+      created_at     INTEGER NOT NULL,
+      completed_at   INTEGER,
+      FOREIGN KEY (tournament_id) REFERENCES tournaments (id) ON DELETE CASCADE,
+      UNIQUE (tournament_id, seq)
+    );
+    INSERT INTO rounds_new (id, tournament_id, seq, arrows_per_end, status, created_at, completed_at)
+      SELECT id, tournament_id, seq, arrows_per_end, status, created_at, completed_at FROM rounds;
+    DROP TABLE rounds;
+    ALTER TABLE rounds_new RENAME TO rounds;
+    COMMIT;
+    PRAGMA foreign_keys=ON;
+  `);
 }
 
 /**

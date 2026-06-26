@@ -27,27 +27,31 @@ export function TournamentCreate() {
 
   const [name, setName] = useState('');
   const [modality, setModality] = useState<Modality>('sala');
-  const [roundsCount, setRoundsCount] = useState(DEFAULT_ROUNDS);
-  const [arrowsPerEnd, setArrowsPerEnd] = useState(DEFAULT_ARROWS.sala);
+  // Campos numéricos como string: permiten quedar vacíos sin auto-setear 0.
+  const [roundsCount, setRoundsCount] = useState(String(DEFAULT_ROUNDS));
+  const [arrowsPerEnd, setArrowsPerEnd] = useState(String(DEFAULT_ARROWS.sala));
   const [selected, setSelected] = useState<number[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   function pickModality(m: Modality) {
     setModality(m);
-    setArrowsPerEnd(DEFAULT_ARROWS[m]);
+    setArrowsPerEnd(String(DEFAULT_ARROWS[m]));
   }
 
   function toggle(id: number) {
     setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   }
 
+  // Vacío → undefined (zod marca "requerido"); si no, número.
+  const toNum = (v: string) => (v.trim() === '' ? undefined : Number(v));
+
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     const parsed = tournamentCreateSchema.safeParse({
       name,
       modality,
-      roundsCount,
-      arrowsPerEnd,
+      roundsCount: toNum(roundsCount),
+      arrowsPerEnd: toNum(arrowsPerEnd),
       avatarIds: selected,
     });
     if (!parsed.success) {
@@ -112,7 +116,7 @@ export function TournamentCreate() {
               min={1}
               max={50}
               value={roundsCount}
-              onChange={(e) => setRoundsCount(Number(e.target.value))}
+              onChange={(e) => setRoundsCount(e.target.value)}
               invalid={Boolean(errors.roundsCount)}
             />
             <FieldError>{errors.roundsCount}</FieldError>
@@ -126,7 +130,7 @@ export function TournamentCreate() {
               min={1}
               max={12}
               value={arrowsPerEnd}
-              onChange={(e) => setArrowsPerEnd(Number(e.target.value))}
+              onChange={(e) => setArrowsPerEnd(e.target.value)}
               invalid={Boolean(errors.arrowsPerEnd)}
             />
             <FieldError>{errors.arrowsPerEnd}</FieldError>
