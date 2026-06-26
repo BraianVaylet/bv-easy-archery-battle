@@ -1,5 +1,5 @@
 import type { TournamentParticipant, TournamentPodium } from '@bv/shared';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -48,8 +48,8 @@ function renderPage() {
   );
 }
 
-describe('Podium (FE-9)', () => {
-  it('renderiza general, categoría y escuela', () => {
+describe('Podium (FE-9) — carousel', () => {
+  it('muestra el general por defecto y navega entre podios', () => {
     const a = p(1, 'Ana', 30);
     const b = p(2, 'Beto', 24);
     state.podium = {
@@ -63,17 +63,34 @@ describe('Podium (FE-9)', () => {
     renderPage();
 
     expect(screen.getByRole('heading', { name: 'General' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Podio siguiente' }));
     expect(screen.getByRole('heading', { name: 'Compuesto' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Podio siguiente' }));
     expect(screen.getByRole('heading', { name: 'Escuela' })).toBeInTheDocument();
-    // En el general aparecen ambos, con sus puntajes.
-    expect(screen.getAllByText('Ana').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('30').length).toBeGreaterThan(0);
   });
 
-  it('oculta escuela cuando no hay principiantes', () => {
-    const a = p(1, 'Ana', 30);
+  it('muestra top 3 y expande a todos', () => {
     state.podium = {
-      general: [{ rank: 1, participant: a }],
+      general: [
+        { rank: 1, participant: p(1, 'Ana', 40) },
+        { rank: 2, participant: p(2, 'Beto', 30) },
+        { rank: 3, participant: p(3, 'Cora', 20) },
+        { rank: 4, participant: p(4, 'Dani', 10) },
+      ],
+      byCategory: [],
+      escuela: [],
+    };
+    renderPage();
+    const carousel = within(screen.getByRole('region', { name: 'Carrusel de podios' }));
+
+    expect(carousel.queryByText('Dani')).toBeNull(); // 4º oculto en top 3
+    fireEvent.click(carousel.getByRole('button', { name: 'Ver todos (4)' }));
+    expect(carousel.getByText('Dani')).toBeInTheDocument();
+  });
+
+  it('sin escuela no aparece ese podio', () => {
+    state.podium = {
+      general: [{ rank: 1, participant: p(1, 'Ana', 30) }],
       byCategory: [],
       escuela: [],
     };
@@ -82,7 +99,7 @@ describe('Podium (FE-9)', () => {
   });
 });
 
-describe('Podium — exportar/compartir (P2)', () => {
+describe('Podium — exportar/compartir', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
@@ -112,7 +129,6 @@ describe('Podium — exportar/compartir (P2)', () => {
       escuela: [],
     };
     const writeText = vi.fn().mockResolvedValue(undefined);
-    // Sin Web Share (undefined en jsdom) → cae al portapapeles.
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
     renderPage();
 
@@ -121,6 +137,6 @@ describe('Podium — exportar/compartir (P2)', () => {
     const text = String(writeText.mock.calls[0]?.[0] ?? '');
     expect(text).toContain('Ana');
     expect(text).toContain('Beto');
-    expect(await screen.findByRole('status')).toHaveTextContent('copiado');
+    expect(await screen.findByText(/copiado/)).toBeInTheDocument();
   });
 });
