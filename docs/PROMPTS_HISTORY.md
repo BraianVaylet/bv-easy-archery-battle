@@ -167,3 +167,41 @@ Cambios de UI y funcional de los Torneos:
 - Cuando un tirada ya tiene datos cargados y se vuelve a la pagina del torneo debe mostrar la etiqueta de en proceso.
 - Cuando se cambia el numero de tiradas o flechas si se limpia el campo se autosetea en 0, eso puede ser molesto, deja que quede vacío y que muestre un error cuando se intenta crear un torneo sin completarlos.
 - En la pagina de tirada mostrar al lado de cada texto "Par X" agregar las categorías de cada participante (Ej Par 1 - Compuesto | Cazador)
+
+## 4. Cambios en UI varios
+
+Cambios en la UI:
+
+Generales:
+- [] Cambia la paleta de color Dark y la de color Light, usa la misma que Claude.
+- [] Cambia la tipografía y usa una similar a Claude.
+- [] En cada botón agrega un icono representativo.
+- [] Agrega en el fondo un efecto de puntillismo con tonalidad apenas mas oscura que el fondo, que pase casi desapercibido  
+- [] usa el icono svg que se encuentra en web/public y úsalo en la app.
+
+Svg:
+- [] Modifica los iconos para cada categoría, 
+	- cazador ✅
+	- compuesto 👉 cambiar a una mira de un solo pin vertical
+	- raso 👉 cambiar por una flecha con Vanes
+	- olímpico 👉 cambiar por un icono de las 3 barras características que usan
+	- 👉 recurvo modifica el arco para que sus palas estén mas curvadas y se diferencien del longbow
+	- longbow ✅
+
+Header:
+- [] El selector de color de acento en el hacer se ve de forma incorrecta (todos los colores solapados), cambia a selección vertical.
+- [] Cambia el botón de volver atrás para que tenga el mismo diseño que los otros del header.
+- [] Agregar una forma de volver a la Home en todas las paginas.
+
+Avatares:
+- [] En la pagina /avatars cambia el "editar", "restaurar" y el "archivar" por iconografía, colócalos dentro de la card, no por fuera
+- [] Cambia el checkbox por un diseño mas moderno.
+
+Nuevo Torneo:
+- [] Cambia nombre por Nombre del torneo
+- [] Cambia el valor de Tiradas por defecto de 10 a 5
+- [] Cambia el listado de participantes, que se muestren como máximo 5 y luego se tenga un scroll.
+
+Torneo:
+- [] Cambiar el Editar nombre, Agregar participante y Estadísticas por solo iconografía.
+- [] El botón agregar tirada debe ir al final del listado de tiradas.
