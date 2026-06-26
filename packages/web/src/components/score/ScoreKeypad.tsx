@@ -1,4 +1,5 @@
 import { cn } from '../../lib/cn';
+import { arrowRows } from './EndRow';
 
 interface ScoreKeypadProps {
   /** Tokens de la modalidad (descendente, incluye inner y M). */
@@ -23,19 +24,22 @@ export function ScoreKeypad({
   const full = draft.length >= arrowsPerEnd;
   return (
     <div className="sticky bottom-0 z-20 border-border border-t bg-surface p-3">
-      <div className="mb-2 flex items-center justify-between">
-        <div className="flex gap-1.5" aria-label="Flechas cargadas">
-          {Array.from({ length: arrowsPerEnd }, (_, i) => (
-            <span
-              // biome-ignore lint/suspicious/noArrayIndexKey: celdas posicionales fijas del end
-              key={i}
-              className={cn(
-                'flex h-8 w-8 items-center justify-center rounded-md border font-medium text-sm',
-                draft[i] ? 'border-primary bg-primary-soft text-fg' : 'border-border text-dim',
-              )}
-            >
-              {draft[i] ?? '·'}
-            </span>
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="flex flex-col gap-1.5" aria-label="Flechas cargadas">
+          {arrowRows(arrowsPerEnd).map((row) => (
+            <div key={row[0]} className="flex gap-1.5">
+              {row.map((i) => (
+                <span
+                  key={i}
+                  className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-md border font-medium text-sm',
+                    draft[i] ? 'border-primary bg-primary-soft text-fg' : 'border-border text-dim',
+                  )}
+                >
+                  {draft[i] ?? '·'}
+                </span>
+              ))}
+            </div>
           ))}
         </div>
         <button type="button" onClick={onClose} className="text-muted text-sm hover:text-fg">

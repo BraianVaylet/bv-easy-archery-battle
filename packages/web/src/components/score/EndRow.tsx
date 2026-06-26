@@ -15,6 +15,15 @@ function colorHex(key: string): string {
   return AVATAR_COLORS.find((c) => c.key === key)?.hex ?? '#7B8497';
 }
 
+/** Divide los índices de flechas en filas de hasta 6 (ej. 12 → 2 filas de 6). */
+export function arrowRows(n: number, per = 6): number[][] {
+  const rows: number[][] = [];
+  for (let i = 0; i < n; i += per) {
+    rows.push(Array.from({ length: Math.min(per, n - i) }, (_, k) => i + k));
+  }
+  return rows;
+}
+
 /** Fila de carga de un participante: color + alias + celdas del end + total. */
 export function EndRow({
   participant,
@@ -42,14 +51,17 @@ export function EndRow({
       <span className="w-20 shrink-0 truncate font-medium text-fg text-sm">
         {participant.alias}
       </span>
-      <span className="flex flex-1 gap-1">
-        {Array.from({ length: arrowsPerEnd }, (_, i) => (
-          <span
-            // biome-ignore lint/suspicious/noArrayIndexKey: celdas posicionales fijas del end
-            key={i}
-            className="flex h-7 min-w-7 items-center justify-center rounded border border-border px-1 text-fg text-xs"
-          >
-            {arrows?.[i] ?? '·'}
+      <span className="flex flex-1 flex-col gap-1">
+        {arrowRows(arrowsPerEnd).map((row) => (
+          <span key={row[0]} className="flex gap-1">
+            {row.map((i) => (
+              <span
+                key={i}
+                className="flex h-7 flex-1 items-center justify-center rounded border border-border px-1 text-fg text-xs"
+              >
+                {arrows?.[i] ?? '·'}
+              </span>
+            ))}
           </span>
         ))}
       </span>
