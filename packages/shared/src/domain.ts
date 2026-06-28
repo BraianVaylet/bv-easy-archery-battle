@@ -160,6 +160,20 @@ export const DEFAULT_ARROWS: Record<Modality, number> = {
 /** Cantidad de tiradas por defecto. */
 export const DEFAULT_ROUNDS = 10;
 
+/**
+ * Cantidad de tiradas por defecto según la modalidad (World Archery).
+ * - Sala (18m): 20 series de 3 flechas (60 flechas).
+ * - Aire libre (720): 12 series de 6 flechas (72 flechas).
+ * - Juegos de campo: 24 dianas.
+ * - 3D: 24 dianas.
+ */
+export const DEFAULT_ROUNDS_BY_MODALITY: Record<Modality, number> = {
+  sala: 20,
+  aire_libre: 12,
+  campo: 24,
+  '3d': 24,
+};
+
 /** Distancia fija de sala (m), informativa. */
 export const SALA_DISTANCE = 18;
 

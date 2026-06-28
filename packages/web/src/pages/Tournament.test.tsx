@@ -151,6 +151,20 @@ describe('Tournament (FE-7)', () => {
     expect(screen.queryByRole('button', { name: 'Eliminar tirada 1' })).toBeNull();
   });
 
+  it('el botón de info abre el modal con las reglas de la modalidad', () => {
+    state.avatars = [];
+    state.tournament = fixture({ modality: '3d' });
+    renderPage();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Reglas de la modalidad' }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByText(/Siluetas 3D/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('agrega participantes disponibles a un torneo en curso', () => {
     state.avatars = [
       {

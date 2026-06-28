@@ -205,3 +205,17 @@ Nuevo Torneo:
 Torneo:
 - [] Cambiar el Editar nombre, Agregar participante y Estadísticas por solo iconografía.
 - [] El botón agregar tirada debe ir al final del listado de tiradas.
+
+
+## 5. Cambios en la UI varios.
+
+implementa las siguientes modificaciones. 
+
+* pagina LOGIN - Agrega el icono de la app en la pagina de Login, centrado en la parte superior.
+* pagina NUEVO TORNEO - coloca como valor de defecto en el campo "tiradas" la cantidad de tiradas que tienen cada modalidad de torneo según la World Archery. Ejemplo: 3D: 24, Juegos de campo: 24, etc
+* pagina NUEVO TORNEO -  agrega iconografia al inicio de cada botón de modalidad de torneo, selecciona iconografía que se relacione con la modalidad o crea svg.
+* Se debe mostrar la fecha de creacion del torneo, tanto en la pagina INICIO como en la pagina TORNEO
+* pagina PODIOS - se deben mostrar los podios uno debajo de otro y no como un carousel.
+
+Agrega la iconofragia svg que usaste para cada modalidad. Agregala en los torneos, en la pagina de inicio agregala adelante del nombre y en la pagina de torneo agregala delante de la cantidad de arqueros - estado y fecha (que ocupe la misma altura que los botones)
+

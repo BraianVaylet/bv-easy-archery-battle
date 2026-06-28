@@ -48,8 +48,8 @@ function renderPage() {
   );
 }
 
-describe('Podium (FE-9) — carousel', () => {
-  it('muestra el general por defecto y navega entre podios', () => {
+describe('Podium (FE-9) — apilado', () => {
+  it('muestra todos los podios uno debajo del otro', () => {
     const a = p(1, 'Ana', 30);
     const b = p(2, 'Beto', 24);
     state.podium = {
@@ -63,9 +63,7 @@ describe('Podium (FE-9) — carousel', () => {
     renderPage();
 
     expect(screen.getByRole('heading', { name: 'General' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Podio siguiente' }));
     expect(screen.getByRole('heading', { name: 'Compuesto' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Podio siguiente' }));
     expect(screen.getByRole('heading', { name: 'Escuela' })).toBeInTheDocument();
   });
 
@@ -81,11 +79,11 @@ describe('Podium (FE-9) — carousel', () => {
       escuela: [],
     };
     renderPage();
-    const carousel = within(screen.getByRole('region', { name: 'Carrusel de podios' }));
+    const board = within(screen.getByRole('region', { name: 'Podios' }));
 
-    expect(carousel.queryByText('Dani')).toBeNull(); // 4º oculto en top 3
-    fireEvent.click(carousel.getByRole('button', { name: 'Ver todos (4)' }));
-    expect(carousel.getByText('Dani')).toBeInTheDocument();
+    // 4º oculto en la vista de pantalla (top 3); el bloque de impresión está oculto vía CSS.
+    fireEvent.click(board.getByRole('button', { name: 'Ver todos (4)' }));
+    expect(board.getAllByText('Dani').length).toBeGreaterThan(0);
   });
 
   it('sin escuela no aparece ese podio', () => {

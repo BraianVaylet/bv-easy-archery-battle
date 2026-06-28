@@ -19,6 +19,9 @@ export function Login() {
   return (
     <AuthScreen
       title="Iniciar sesión"
+      icon={
+        <img src="/icon.svg" alt="BV Archery Battle" className="h-20 w-20 rounded-2xl shadow-sm" />
+      }
       footer={
         <>
           ¿No tenés cuenta?{' '}
