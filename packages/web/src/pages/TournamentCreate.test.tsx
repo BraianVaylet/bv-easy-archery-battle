@@ -36,16 +36,21 @@ function renderPage() {
 }
 
 describe('TournamentCreate (FE-6)', () => {
-  it('la modalidad fija las flechas por defecto', () => {
+  it('la modalidad fija las flechas y las tiradas por defecto (WA)', () => {
     renderPage();
     const arrows = screen.getByLabelText('Flechas por tirada');
+    const rounds = screen.getByLabelText('Tiradas');
     expect(arrows).toHaveValue(3); // sala
+    expect(rounds).toHaveValue(20);
     fireEvent.click(screen.getByRole('button', { name: 'Aire libre' }));
     expect(arrows).toHaveValue(6);
+    expect(rounds).toHaveValue(12);
     fireEvent.click(screen.getByRole('button', { name: '3D' }));
     expect(arrows).toHaveValue(2);
+    expect(rounds).toHaveValue(24);
     fireEvent.click(screen.getByRole('button', { name: 'Juegos de campo' }));
     expect(arrows).toHaveValue(3);
+    expect(rounds).toHaveValue(24);
   });
 
   it('valida nombre y participantes', () => {
@@ -63,7 +68,7 @@ describe('TournamentCreate (FE-6)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Crear torneo' }));
 
     expect(createMutate).toHaveBeenCalledWith(
-      { name: 'Copa', modality: 'sala', roundsCount: 5, arrowsPerEnd: 3, avatarIds: [5] },
+      { name: 'Copa', modality: 'sala', roundsCount: 20, arrowsPerEnd: 3, avatarIds: [5] },
       expect.objectContaining({ onSuccess: expect.any(Function) }),
     );
   });

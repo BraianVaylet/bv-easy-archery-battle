@@ -1,17 +1,32 @@
 import {
   BOW_CATEGORY_LABELS,
+  MODALITY_LABELS,
+  type Modality,
   type PodiumEntry,
   type RoundStatus,
   type TournamentParticipant,
 } from '@bv/shared';
-import { ChartColumn, Check, Flag, Pencil, Plus, Trash2, Trophy, UserPlus } from 'lucide-react';
-import { useState } from 'react';
+import {
+  ChartColumn,
+  Check,
+  Flag,
+  Info,
+  Pencil,
+  Plus,
+  Trash2,
+  Trophy,
+  UserPlus,
+  X,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAvatars } from '../avatars/useAvatars';
 import { AppShell } from '../components/AppShell';
 import { AvatarBadge } from '../components/AvatarBadge';
+import { MODALITY_ICONS } from '../components/icons/modality';
 import { Button, Card, Input, Spinner } from '../components/ui';
 import { cn } from '../lib/cn';
+import { formatDate } from '../lib/date';
 import {
   useAddParticipants,
   useAddRound,
@@ -30,6 +45,35 @@ const ROUND_BADGE: Record<RoundStatus, { label: string; className: string }> = {
 const TOOLBAR_BTN =
   'flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-surface text-fg transition-colors hover:bg-surface-2';
 
+/** Recordatorio breve de reglas WA por modalidad (para arqueros que ya practican). */
+const MODALITY_RULES: Record<Modality, string[]> = {
+  sala: [
+    'Distancia: 18 m, bajo techo.',
+    'Diana de 40 cm (o triple spot vertical).',
+    'Puntaje: 10 a 1; el inner-10 cuenta como X (desempate). M = 0.',
+    'Formato WA: 20 series de 3 flechas (60 en total).',
+  ],
+  aire_libre: [
+    'Distancias: 70/60/50/30 m según categoría.',
+    'Diana de 122 cm (80 cm en las distancias cortas).',
+    'Puntaje: 10 a 1; el inner-10 cuenta como X (desempate). M = 0.',
+    'Formato WA 720: 12 series de 6 flechas (72 en total).',
+  ],
+  campo: [
+    'Recorrido por estaciones en terreno.',
+    'La estaca por categoría (roja/azul/amarilla) define la distancia.',
+    'Distancias conocidas y desconocidas.',
+    'Puntaje: zona central 6, luego 5 a 1. M = 0.',
+    'Recorrido WA: 24 dianas.',
+  ],
+  '3d': [
+    'Siluetas 3D de animales a distancia desconocida.',
+    'La estaca por categoría define la posición de tiro.',
+    'Puntaje: 11 (centro interno), 10, 8, 5. M = 0.',
+    'Recorrido WA: 24 dianas.',
+  ],
+};
+
 export function Tournament() {
   const { id } = useParams();
   const tid = Number(id);
@@ -39,6 +83,7 @@ export function Tournament() {
   const deleteRound = useDeleteRound(tid);
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [info, setInfo] = useState(false);
 
   if (isLoading) {
     return (
@@ -60,13 +105,25 @@ export function Tournament() {
   const allComplete = t.rounds.length > 0 && t.rounds.every((r) => r.status === 'completa');
   const hasPodium = t.rounds.some((r) => r.status === 'completa');
   const finished = t.status === 'finalizado';
+  const ModalityIcon = MODALITY_ICONS[t.modality];
 
   return (
     <AppShell title={t.name} showBack>
       <div className="mb-3 flex items-center justify-between gap-2">
-        <p className="text-muted text-sm">
-          {`${t.participants.length} arqueros · ${finished ? 'Finalizado' : 'En curso'}`}
-        </p>
+        <div className="flex items-center gap-2">
+          <span
+            className="flex h-10 w-10 shrink-0 items-center justify-center text-muted"
+            title={MODALITY_LABELS[t.modality]}
+          >
+            <ModalityIcon size={24} />
+          </span>
+          <div>
+            <p className="text-muted text-sm">
+              {`${t.participants.length} arqueros · ${finished ? 'Finalizado' : 'En curso'}`}
+            </p>
+            <p className="text-muted text-xs">Creado el {formatDate(t.createdAt)}</p>
+          </div>
+        </div>
         <div className="flex items-center gap-1.5">
           {!finished && (
             <>
@@ -92,11 +149,27 @@ export function Tournament() {
               </button>
             </>
           )}
+          <button
+            type="button"
+            aria-label="Reglas de la modalidad"
+            className={TOOLBAR_BTN}
+            onClick={() => setInfo(true)}
+          >
+            <Info size={16} aria-hidden />
+          </button>
           <Link to={`/tournaments/${tid}/stats`} aria-label="Estadísticas" className={TOOLBAR_BTN}>
             <ChartColumn size={16} aria-hidden />
           </Link>
         </div>
       </div>
+
+      {info && (
+        <ModalityInfo
+          modality={t.modality}
+          arrowsPerEnd={t.arrowsPerEnd}
+          onClose={() => setInfo(false)}
+        />
+      )}
 
       {editing && <EditName tid={tid} name={t.name} />}
 
@@ -183,6 +256,70 @@ export function Tournament() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+/** Modal con el recordatorio breve de reglas de la modalidad. */
+function ModalityInfo({
+  modality,
+  arrowsPerEnd,
+  onClose,
+}: {
+  modality: Modality;
+  arrowsPerEnd: number;
+  onClose: () => void;
+}) {
+  const Icon = MODALITY_ICONS[modality];
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+      onClick={onClose}
+    >
+      <dialog
+        open
+        aria-modal="true"
+        aria-labelledby="modality-info-title"
+        className="w-full max-w-md rounded-2xl border border-border bg-surface p-5 text-fg shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center gap-2">
+          <Icon size={22} className="shrink-0 text-primary" />
+          <h2 id="modality-info-title" className="flex-1 font-semibold text-fg text-lg">
+            {MODALITY_LABELS[modality]}
+          </h2>
+          <button
+            type="button"
+            aria-label="Cerrar"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+          >
+            <X size={18} aria-hidden />
+          </button>
+        </div>
+        <ul className="flex flex-col gap-2 text-fg text-sm">
+          {MODALITY_RULES[modality].map((rule) => (
+            <li key={rule} className="flex gap-2">
+              <span aria-hidden className="text-primary">
+                •
+              </span>
+              <span>{rule}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 border-border border-t pt-3 text-muted text-xs">
+          En este torneo: {arrowsPerEnd} flechas por tirada.
+        </p>
+      </dialog>
+    </div>
   );
 }
 

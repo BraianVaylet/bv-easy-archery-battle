@@ -4,6 +4,7 @@ import {
   BOW_CATEGORIES,
   BOW_CATEGORY_LABELS,
   DEFAULT_ARROWS,
+  DEFAULT_ROUNDS_BY_MODALITY,
   MODALITIES,
   MODALITY_LABELS,
   type Modality,
@@ -16,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAvatars } from '../avatars/useAvatars';
 import { AppShell } from '../components/AppShell';
 import { AvatarBadge } from '../components/AvatarBadge';
+import { MODALITY_ICONS } from '../components/icons/modality';
 import { Button, FieldError, Input, Label } from '../components/ui';
 import { cn } from '../lib/cn';
 import { useCreateTournament } from '../tournaments/useTournaments';
@@ -28,7 +30,7 @@ export function TournamentCreate() {
   const [name, setName] = useState('');
   const [modality, setModality] = useState<Modality>('sala');
   // Campos numéricos como string: permiten quedar vacíos sin auto-setear 0.
-  const [roundsCount, setRoundsCount] = useState('5');
+  const [roundsCount, setRoundsCount] = useState(String(DEFAULT_ROUNDS_BY_MODALITY.sala));
   const [arrowsPerEnd, setArrowsPerEnd] = useState(String(DEFAULT_ARROWS.sala));
   const [selected, setSelected] = useState<number[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -36,6 +38,7 @@ export function TournamentCreate() {
   function pickModality(m: Modality) {
     setModality(m);
     setArrowsPerEnd(String(DEFAULT_ARROWS[m]));
+    setRoundsCount(String(DEFAULT_ROUNDS_BY_MODALITY[m]));
   }
 
   function toggle(id: number) {
@@ -87,22 +90,26 @@ export function TournamentCreate() {
         <fieldset className="border-0 p-0">
           <legend className="mb-1 block font-medium text-muted text-sm">Modalidad</legend>
           <div className="grid grid-cols-2 gap-2">
-            {MODALITIES.map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={modality === m}
-                onClick={() => pickModality(m)}
-                className={cn(
-                  'min-h-11 rounded-lg border px-3 py-2 text-sm transition-colors',
-                  modality === m
-                    ? 'border-primary bg-primary-soft text-fg'
-                    : 'border-border bg-surface text-muted hover:bg-surface-2',
-                )}
-              >
-                {MODALITY_LABELS[m]}
-              </button>
-            ))}
+            {MODALITIES.map((m) => {
+              const Icon = MODALITY_ICONS[m];
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  aria-pressed={modality === m}
+                  onClick={() => pickModality(m)}
+                  className={cn(
+                    'flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors',
+                    modality === m
+                      ? 'border-primary bg-primary-soft text-fg'
+                      : 'border-border bg-surface text-muted hover:bg-surface-2',
+                  )}
+                >
+                  <Icon size={18} className="shrink-0" />
+                  {MODALITY_LABELS[m]}
+                </button>
+              );
+            })}
           </div>
         </fieldset>
 
