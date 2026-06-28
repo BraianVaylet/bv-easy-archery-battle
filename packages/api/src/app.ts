@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import type { DB } from './db/connection';
 import { env, isProd } from './env';
 import { requireAuth } from './middleware/auth';
+import { apiNoStore } from './middleware/cache';
 import { errorHandler } from './middleware/error';
 import { rateLimit } from './middleware/rateLimit';
 import { bodyLimit, securityHeaders } from './middleware/security';
@@ -40,6 +41,9 @@ export function createApp(db: DB) {
 
   // ── API ──
   const api = new Hono<AppEnv>();
+
+  // El CDN nunca debe cachear la API (datos dinámicos / sesión por cookie).
+  api.use('*', apiNoStore);
 
   // Rate limit más estricto para auth (anti fuerza bruta)
   api.use(
